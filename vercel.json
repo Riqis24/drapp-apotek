@@ -12,8 +12,8 @@
     ],
     "env": {
         "APP_ENV": "production",
-        "APP_DEBUG": "false",
-        "APP_KEY": "base64:TGaVaXwhWgjn9akhE4SCSIjGG/cQqvICUQ+PgLA3Bs0=",
+        "APP_DEBUG": "true",
+        "APP_KEY": "base64:TJsqpH6quTdZD3pwA6IeUiQYyEzGes44x5Dz1nIFxyw=",
         "APP_CONFIG_CACHE": "/tmp/config.php",
         "APP_EVENTS_CACHE": "/tmp/events.php",
         "APP_PACKAGES_CACHE": "/tmp/packages.php",
@@ -24,9 +24,11 @@
         "LOG_CHANNEL": "stderr",
         "SESSION_DRIVER": "cookie",
         "DB_CONNECTION": "mysql",
-        "DB_HOST": "4gg.h.filess.io",
-        "DB_PORT": "3306",
-        "DB_DATABASE": "db2024_stormtorn",
-        "DB_USERNAME": "db2024_stormtorn"
+        "DB_HOST": "gateway01.ap-southeast-1.prod.aws.tidbcloud.com",
+        "DB_PORT": "4000",
+        "DB_DATABASE": "apoteku",
+        "DB_PASSWORD": "YDZOyQZkA3Jx9sgx",
+        "DB_USERNAME": "2mNjXEG9Ps9R3ti.root",
+        "MYSQL_ATTR_SSL_CA": "/etc/ssl/certs/ca-certificates.crt"
     }
 }
