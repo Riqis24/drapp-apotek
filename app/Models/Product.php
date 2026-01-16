@@ -68,7 +68,7 @@ class Product extends Model
 
     public function stocks()
     {
-        return $this->hasMany(Stocks::class, 'product_id');
+        return $this->hasMany(stocks::class, 'product_id');
     }
 
     // Jika produk ini bundle, ambil komponennya
