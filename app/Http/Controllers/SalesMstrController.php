@@ -460,21 +460,30 @@ class SalesMstrController extends Controller
             // dd($request->details);
             if ($request->details) {
                 foreach ($request->details as $keyRacik => $racik) {
+                    // Ambil jumlah bungkus untuk pengiraan stok yang tepat
+                    $jmlBungkus = (float) ($racik['jumlah_bungkus'] ?? 1);
+                    $namaRacik = $racik['nama'] ?? 'Racikan';
+
                     foreach ($racik['details'] as $index => $bahan) {
                         $pm = ProductMeasurements::where('product_id', $bahan['product_id'])
                             ->where('measurement_id', $bahan['measurement_id'])
                             ->firstOrFail();
 
                         $conversion = (float) $pm->conversion;
-                        $qtyBase    = (float) $bahan['qty'] * $conversion;
 
-                        // FIFO
-                        $this->processStockOutFIFO(
-                            $bahan['product_id'],
-                            $request->loc_id,
-                            $qtyBase,
-                            $sales->sales_mstr_id
-                        );
+                        // PENTING: Stok yang keluar adalah (Qty Bahan * Jumlah Bungkus)
+                        $qtyBase = (float) $bahan['qty'] * $jmlBungkus * $conversion;
+
+                        // Stok terus dikurangkan walaupun statusnya HOLD
+                        // Kerana ubat sudah hancur/diadun
+                        if (empty($request->holdid)) {
+                            $this->processStockOutFIFO(
+                                $bahan['product_id'],
+                                $request->loc_id,
+                                $qtyBase,
+                                $sales->sales_mstr_id, // ID transaksi (walaupun status DRAFT/HOLD)
+                            );
+                        }
                     }
                 }
             } else {
