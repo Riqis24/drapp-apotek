@@ -24,11 +24,10 @@
         "LOG_CHANNEL": "stderr",
         "SESSION_DRIVER": "cookie",
         "DB_CONNECTION": "mysql",
-        "DB_HOST": "gateway01.ap-southeast-1.prod.aws.tidbcloud.com",
-        "DB_PORT": "4000",
+        "DB_HOST": "ek85j4.h.filess.io",
+        "DB_PORT": "3307",
         "DB_DATABASE": "apoteku",
-        "DB_PASSWORD": "YDZOyQZkA3Jx9sgx",
-        "DB_USERNAME": "2mNjXEG9Ps9R3ti.root",
-        "MYSQL_ATTR_SSL_CA": "/etc/ssl/certs/ca-certificates.crt"
+        "DB_PASSWORD": "ab98ea442b6f71bfb0a6dfbccf769be5dd2af507",
+        "DB_USERNAME": "apoteku_takentiny"
     }
 }
