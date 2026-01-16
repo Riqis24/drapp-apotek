@@ -78,6 +78,14 @@
                             </label>
                         </div>
 
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" value="1" id="loc_isvisible"
+                                name="loc_mstr_isvisible" checked>
+                            <label class="form-check-label" for="loc_isvisible">
+                                Aktif
+                            </label>
+                        </div>
+
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>

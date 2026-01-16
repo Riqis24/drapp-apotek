@@ -234,6 +234,8 @@ class SalesMstrController extends Controller
             $locations = LocMstr::get();
             $customers = Customer::get();
         }
+
+        // dd($locations);
         return view('sales.cashier2', compact('locations', 'items', 'holds', 'dueAps', 'customers', 'session'));
     }
 
@@ -299,9 +301,9 @@ class SalesMstrController extends Controller
     public function resumeHold($id)
     {
         $hold = SalesMstr::with(['details.product', 'details.measurement'])->findOrFail($id);
+        // dd($hold);
 
-
-        $items = $hold->details->map(function ($det) {
+        $items = $hold->details->map(function ($det) use ($hold) {
             if (!empty($det->sales_det_pmid)) {
                 $pres = PresMstr::with('details')->find($det->sales_det_pmid);
                 return [
@@ -325,22 +327,24 @@ class SalesMstrController extends Controller
                 $placement = ProductPlacement::where('id', $pm->placement_id)->first();
                 $stock = stocks::with('batch')
                     ->where('product_id', $det->sales_det_productid)
-                    ->where('loc_id', $det->sales_det_locid)
+                    ->where('loc_id', $hold->sales_mstr_locid)
                     ->where('batch_id', $det->sales_det_batchid)
                     ->first();
+                // dd($stock);
 
                 return [
-                    // 'price_id'      => $det->sales_det_priceid,
-                    'product_id'        => $det->sales_det_productid,
-                    'measurement_id'    => $det->sales_det_um,
-                    'qty'               => $det->sales_det_qty,
-                    'price'             => $det->sales_det_price,
-                    'disc'              => $det->sales_det_discamt,
-                    'product'           => $det->product->name,       // ✅ langsung dari det
-                    'measurement'       => $det->measurement->name,  // ✅ langsung dari det
-                    'batch_number'      => $stock->batch->batch_mstr_no ?? '-',
-                    'batch_exp'         => $stock->batch->batch_mstr_expireddate ?? '-',
-                    'rak'               => $placement ? $placement->name : '-',
+                    'id'             => $det->sales_det_id, // Tambahkan ID det agar JS bisa mengenali baris
+                    'product_id'     => $det->sales_det_productid,
+                    'product'        => $det->product->name, // Sesuaikan dengan yang dipanggil formatObat
+                    'measurement'    => $det->measurement->name,
+                    'measurement_id' => $det->sales_det_um,
+                    'qty'            => $det->sales_det_qty,
+                    'price'          => (float)$det->sales_det_price,
+                    'disc'           => $det->sales_det_discamt,
+                    'batch_number'   => $stock->batch->batch_mstr_no ?? '-',
+                    'batch_exp'      => $stock->batch->batch_mstr_expireddate ?? '-',
+                    'rak'            => $placement ? $placement->name : '-',
+                    'type'           => 'regular',
                 ];
             }
         });
@@ -349,6 +353,8 @@ class SalesMstrController extends Controller
         } else {
             $ppn = 'none';
         }
+
+        // dd($items);
         return response()->json([
             'sales_mstr_id' => $hold->sales_mstr_id,
             'sales_mstr_discamt' => $hold->sales_mstr_discamt,
@@ -439,8 +445,8 @@ class SalesMstrController extends Controller
                     'sales_mstr_subtotal' => $request->subtotal,
                     'sales_mstr_custid'  => $request->customer_id,
                     'sales_mstr_paymenttype'  => $request->payment_type,
-                    'sales_mstr_paidamt'  => $request->paymentInput,
-                    'sales_mstr_changeamt'  => $change,
+                    'sales_mstr_paidamt'  => $request->paymentInput ?? 0,
+                    'sales_mstr_changeamt'  => $change ?? 0,
                     'sales_mstr_discamt'  => $request->disc_global,
                     'sales_mstr_ppnamt'   => $request->ppn,
                     'sales_mstr_grandtotal' => $request->grandtotal,
@@ -451,17 +457,39 @@ class SalesMstrController extends Controller
 
             $subtotal = 0;
 
-            // dd($request->items);
+            // dd($request->details);
+            if ($request->details) {
+                foreach ($request->details as $keyRacik => $racik) {
+                    foreach ($racik['details'] as $index => $bahan) {
+                        $pm = ProductMeasurements::where('product_id', $bahan['product_id'])
+                            ->where('measurement_id', $bahan['measurement_id'])
+                            ->firstOrFail();
 
-            foreach ($request->items as $item) {
-                if ($item['type'] === 'bundle') {
-                    $this->processBundleItem($sales, $item, $request);
-                } elseif ($item['type'] === 'racikan') { // <--- Tambahkan ini
-                    $this->processRacikanItem($sales, $item, $request);
-                } else {
-                    $this->processSingleItem($sales, $item, $request);
+                        $conversion = (float) $pm->conversion;
+                        $qtyBase    = (float) $bahan['qty'] * $conversion;
+
+                        // FIFO
+                        $this->processStockOutFIFO(
+                            $bahan['product_id'],
+                            $request->loc_id,
+                            $qtyBase,
+                            $sales->sales_mstr_id
+                        );
+                    }
+                }
+            } else {
+                foreach ($request->items as $item) {
+                    if ($item['type'] === 'bundle') {
+                        $this->processBundleItem($sales, $item, $request);
+                    } elseif ($item['type'] === 'racikan') { // <--- Tambahkan ini
+                        $this->processRacikanItem($sales, $item, $request);
+                    } else {
+                        $this->processSingleItem($sales, $item, $request);
+                    }
                 }
             }
+
+
 
 
 
@@ -506,11 +534,18 @@ class SalesMstrController extends Controller
             DB::commit();
 
             // 4. RETURN SUKSES (DI LUAR TRANSAKSI)
-            return response()->json([
-                'status'  => 'success',
-                'message' => 'Transaksi berhasil disimpan!',
-                'print_id'      => $sales->sales_mstr_id
-            ], 200);
+            if ($request->type === 'paid') {
+                return response()->json([
+                    'status'  => 'success',
+                    'message' => 'Transaksi berhasil disimpan!',
+                    'print_id'      => $sales->sales_mstr_id
+                ], 200);
+            } else {
+                return response()->json([
+                    'status'  => 'success',
+                    'message' => 'Transaksi berhasil dihold!'
+                ], 200);
+            }
         } catch (Exception $e) {
             // 5. ROLLBACK JIKA GAGAL
             // Semua data yang sempat masuk akan ditarik kembali

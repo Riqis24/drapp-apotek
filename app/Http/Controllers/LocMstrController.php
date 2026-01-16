@@ -30,7 +30,8 @@ class LocMstrController extends Controller
         LocMstr::create([
             'loc_mstr_code' => $request->loc_mstr_code,
             'loc_mstr_name' => $request->loc_mstr_name,
-            'loc_mstr_active' => $request->has('loc_mstr_active') ? 1 : 0
+            'loc_mstr_active' => $request->has('loc_mstr_active') ? 1 : 0,
+            'loc_mstr_isvisible' => $request->has('loc_mstr_isvisible') ? 1 : 0
         ]);
 
         return redirect()->route('LocMstr.index')->with('success', 'Gudang berhasil ditambahkan');

@@ -154,7 +154,7 @@ class SaMstrController extends Controller
                     'note'        => 'Stock Adjustment',
                     'date'        => $sa->sa_mstr_date,
                     'source_type' => SaMstr::class,
-                    'source_id'   => $sa->id,
+                    'source_id'   => $sa->sa_mstr_id,
                 ]);
 
                 // =========================

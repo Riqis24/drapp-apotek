@@ -38,18 +38,22 @@
                             <tbody>
                                 @foreach ($transactions as $index => $st)
                                     @php
-                                        $lookupKey = "{$st->source_type}_{$st->source_id}";
-
-                                        // Ambil data dari Map yang dikirim dari Controller
+                                        $lookupKey = $st->id;
                                         $itemInfo = $detailsMap[$lookupKey] ?? null;
-                                        // dump($itemInfo);
-                                        // AMAN: Cek dulu apakah $itemInfo ada, baru akses 'price'
-                                        // Jika $itemInfo null ATAU 'price' tidak ada, gunakan harga beli master
-                                        $unitPrice = $itemInfo && isset($itemInfo['price']) ? $itemInfo['price'] : 0;
 
-                                        $subtotal = $itemInfo
-                                            ? $itemInfo['total']
-                                            : $itemInfo['price'] * $st->quantity ?? 0;
+                                        $unitPrice = $itemInfo['price'] ?? 0;
+                                        $subtotal =
+                                            $itemInfo && $itemInfo['total'] > 0
+                                                ? $itemInfo['total']
+                                                : $unitPrice * $st->quantity;
+                                        $subtotal = 0;
+                                        if ($itemInfo) {
+                                            // Jika ada di map, prioritas ambil 'total', jika tidak ada baru (price * qty)
+                                            $subtotal = $itemInfo['total'] ?? $itemInfo['price'] * $st->quantity;
+                                        } else {
+                                            // Jika tidak ada di map (seperti Stock Adjustment), subtotal bisa 0 atau (HPP * qty)
+                                            $subtotal = 0;
+                                        }
 
                                         $isHpp = !$itemInfo;
 
@@ -109,6 +113,8 @@
                                                 {{ $st->source->supplier->supp_mstr_name ?? '-' }}
                                             @elseif($st->source_type == \App\Models\PrMstr::class)
                                                 {{ $st->source->supplier->supp_mstr_name ?? '-' }}
+                                            @elseif($st->source_type == \App\Models\SaMstr::class)
+                                                -
                                             @else
                                                 -
                                             @endif

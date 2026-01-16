@@ -39,42 +39,59 @@ class StocksController extends Controller
             ->latest()
             ->paginate(50);
 
-
         $detailsMap = [];
 
         foreach ($transactions as $st) {
+            // Inisialisasi default agar tidak null jika tidak ditemukan detailnya
+            $detailsMap[$st->id] = [
+                'price' => 0,
+                'total' => 0
+            ];
+
             if ($st->source && method_exists($st->source, 'details')) {
                 foreach ($st->source->details as $det) {
-                    // Kita buat Key unik per transaksi agar tidak tertukar
+                    // Mapping ID produk dari berbagai kemungkinan nama kolom detail
+                    $detPid = $det->sales_det_productid ??
+                        $det->bpb_det_productid ??
+                        $det->sr_det_productid ??
+                        $det->pr_det_productid ??
+                        $det->sa_det_productid ??
+                        $det->ts_det_productid ?? 0;
 
-                    $key = "{$st->source_type}_{$st->source_id}";
-
-                    // Ambil harga berdasarkan jenis transaksi
-                    $price = 0;
-                    if ($st->source_type == \App\Models\SalesMstr::class) {
-                        $qtyConv = max($det->sales_det_umconv ?? 1, 1);
-                        $price = ($det->sales_det_price ?? 0) / $qtyConv;
-                    } elseif ($st->source_type == \App\Models\BpbMstr::class) {
-                        $price = $det->bpb_det_priceconv ?? 0;
-                    } elseif ($st->source_type == \App\Models\PrMstr::class) {
-                        $qtyConv = max($det->pr_det_umconv ?? 1, 1);
-                        $price = ($det->pr_det_price ?? 0) / $qtyConv;
-                    } elseif ($st->source_type == \App\Models\SrMstr::class) {
-                        $qtyConv = max($det->sr_det_umconv ?? 1, 1);
-                        $price = ($det->sr_det_price ?? 0) / $qtyConv;
-                    } else {
-                        $price = $det->sr_det_price ?? 0;
-                    }
-
-                    // Simpan ke map hanya jika product_id-nya cocok dengan transaksi ini
-                    // Sesuaikan nama kolom ID produk masing-masing tabel
-                    $detPid = $det->sales_det_productid ?? $det->bpb_det_productid ?? $det->sr_det_productid ?? $det->pr_det_productid ?? $det->sa_det_productid ?? $det->ts_det_productid ?? 0;
-
+                    // Cek kecocokan produk
                     if ($detPid == $st->product_id) {
-                        $detailsMap[$key] = [
+                        $price = 0;
+                        $total = 0;
+
+                        // Logika Penentuan Harga & Total berdasarkan Tipe Model
+                        if ($st->source_type == \App\Models\SalesMstr::class) {
+                            $qtyConv = max($det->sales_det_umconv ?? 1, 1);
+                            $price = ($det->sales_det_price ?? 0) / $qtyConv;
+                            $total = $det->sales_det_subtotal ?? 0;
+                        } elseif ($st->source_type == \App\Models\BpbMstr::class) {
+                            $price = $det->bpb_det_priceconv ?? 0;
+                            $total = $det->bpb_det_total ?? 0;
+                        } elseif ($st->source_type == \App\Models\PrMstr::class) {
+                            $qtyConv = max($det->pr_det_umconv ?? 1, 1);
+                            $price = ($det->pr_det_price ?? 0) / $qtyConv;
+                            $total = $det->pr_det_subtotal ?? 0;
+                        } elseif ($st->source_type == \App\Models\SrMstr::class) {
+                            $qtyConv = max($det->sr_det_umconv ?? 1, 1);
+                            $price = ($det->sr_det_price ?? 0) / $qtyConv;
+                            $total = $det->sr_det_subtotal ?? 0;
+                        } elseif ($st->source_type == \App\Models\SaMstr::class) {
+                            $price = $det->sa_det_price ?? 0;
+                            $total = $det->sa_det_subtotal ?? 0;
+                        }
+
+                        // Simpan menggunakan ID Transaksi Stok sebagai Key Unik
+                        $detailsMap[$st->id] = [
                             'price' => $price,
-                            'total' => $det->sales_det_subtotal ?? $det->bpb_det_total ?? $det->sr_det_subtotal ?? $det->pr_det_subtotal ?? 0
+                            'total' => $total
                         ];
+
+                        // Sangat Penting: Stop loop detail jika baris yang cocok sudah ketemu
+                        break;
                     }
                 }
             }

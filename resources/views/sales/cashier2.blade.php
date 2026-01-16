@@ -1711,7 +1711,13 @@
                 // pastikan ada item
                 const rows = cartBody.querySelectorAll('tr');
                 if (rows.length === 0) {
-                    alert('Item masih kosong');
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Keranjang Kosong',
+                        text: 'Silakan pilih obat atau item terlebih dahulu sebelum melanjutkan.',
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'Siap, Mengerti!'
+                    });
                     return;
                 }
 
@@ -1752,10 +1758,9 @@
                 const paymentInput = document.getElementById('paymentInput');
                 const paid = parseFloat(paymentInput.value) || 0;
 
-                const holdid = document.getElementById('hold_id').value;
+                // console.log(paymentType);
 
                 const paymentType = document.getElementById('payment_type').value;
-                console.log(paymentType);
 
                 if (paymentType == 'cash') {
                     if (paid < 0) {
@@ -1771,6 +1776,8 @@
                     }
                 }
 
+                const holdid = document.getElementById('hold_id').value;
+                console.log(holdid);
                 // Submit
                 // Contoh pemanggilan
                 submitSale('paid', subtotal, dgAmt, ppn, grand, holdid)
@@ -1799,7 +1806,13 @@
             function handleHold() {
                 const rows = cartBody.querySelectorAll('tr');
                 if (rows.length === 0) {
-                    alert('Item masih kosong');
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Keranjang Kosong',
+                        text: 'Silakan pilih obat atau item terlebih dahulu sebelum melanjutkan.',
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: 'Siap, Mengerti!'
+                    });
                     return;
                 }
 
@@ -1847,28 +1860,71 @@
                     });
                 });
                 // console.log(items);
-                const holdid = null;
-                submitSale('draft', subtotal, dgAmt, ppn, grand, holdid);
+                const holdid = document.getElementById('hold_id').value;
+
+                submitSale('draft', subtotal, dgAmt, ppn, grand, holdid, items);
                 // alert('Transaksi ditunda (HOLD)');
-                clearCart();
-                updateHoldList();
             }
 
             // ============================
             // RESUME HOLD FUNCTION
             // ============================
             function resumeHold(id) {
+                // 1. Tampilkan Loading agar user tidak klik berkali-kali
+                Swal.fire({
+                    title: 'Memuat Data...',
+                    text: 'Mohon tunggu sebentar',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
                 fetch(`/sales/hold/${id}/resume`)
-                    .then(res => res.json())
+                    .then(res => {
+                        if (!res.ok) throw new Error('Gagal mengambil data dari server');
+                        return res.json();
+                    })
                     .then(data => {
+                        // 2. Kosongkan keranjang lama
                         clearCart();
-                        data.items.forEach(item => addItem(item)); // Fungsi addItem dari POS
-                        document.getElementById('disc_global_value').value = data.sales_mstr_discamt;
+
+                        // 3. Masukkan item baru
+                        if (data.items && data.items.length > 0) {
+                            data.items.forEach(item => addItem(item));
+                        }
+
+                        // 4. Set Header Data
+                        document.getElementById('disc_global_value').value = data.sales_mstr_discamt || 0;
                         document.getElementById('ppn_type').value = data.ppn_type;
                         document.getElementById('hold_id').value = data.sales_mstr_id;
-                        recalc(); // hitung ulang subtotal / total
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('holdListModal'));
-                        modal.hide();
+
+                        // 5. Hitung ulang totalan
+                        recalc();
+
+                        // 6. Tutup Modal Hold List
+                        const modalEl = document.getElementById('holdListModal');
+                        const modal = bootstrap.Modal.getInstance(modalEl);
+                        if (modal) modal.hide();
+
+                        // 7. Tutup Loading dan beri notifikasi sukses (Toast)
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Data Berhasil Dimuat',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 2000,
+                            timerProgressBar: true
+                        });
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Oops...',
+                            text: 'Terjadi kesalahan: ' + err.message
+                        });
                     });
             }
 
@@ -1876,22 +1932,65 @@
             // CANCEL HOLD FUNCTION
             // ============================
             function cancelHold(id) {
-                if (!confirm('Batalkan transaksi HOLD ini?')) return;
+                // 1. Konfirmasi dengan tema Peringatan (Warning)
+                Swal.fire({
+                    title: 'Batalkan Transaksi?',
+                    text: "Data transaksi yang ditunda ini akan dihapus permanen!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33', // Warna merah untuk aksi hapus
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Ya, Hapus!',
+                    cancelButtonText: 'Batal',
+                    allowOutsideClick: false
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // 2. Tampilkan Loading saat proses hapus di server
+                        Swal.fire({
+                            title: 'Sedang Menghapus...',
+                            allowOutsideClick: false,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            }
+                        });
 
-                fetch(`/sales/hold/${id}/cancel`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        }
-                    })
-                    .then(res => res.json())
-                    .then(res => {
-                        alert('Transaksi HOLD dibatalkan');
-                        updateHoldList();
-                    });
+                        fetch(`/sales/hold/${id}/cancel`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                }
+                            })
+                            .then(res => {
+                                if (!res.ok) throw new Error('Gagal membatalkan transaksi');
+                                return res.json();
+                            })
+                            .then(res => {
+                                // 3. Notifikasi sukses (Toast)
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Dibatalkan',
+                                    text: 'Transaksi HOLD telah berhasil dihapus.',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                });
+
+                                // 4. Refresh daftar hold
+                                if (typeof updateHoldList === 'function') {
+                                    updateHoldList();
+                                }
+                            })
+                            .catch(err => {
+                                console.error(err);
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Gagal!',
+                                    text: err.message
+                                });
+                            });
+                    }
+                });
             }
-
             // ============================
             // UPDATE HOLD LIST RELOAD
             // ============================
@@ -2030,14 +2129,6 @@
             });
         </script>
         <script>
-            function clearCart() {
-                cartBody.innerHTML = '';
-                document.getElementById('disc_global_value').value = 0;
-                document.getElementById('paymentInput').value = 0;
-                document.getElementById('change').value = 0;
-                recalc();
-            }
-
             function submitSale(type, subtotal, disc_global, ppn, grandtotal, holdid) {
                 // 1. Validasi Cart (Menggunakan SweetAlert)
                 if (cartBody.children.length === 0) {
@@ -2048,10 +2139,14 @@
                     return;
                 }
 
+                const modalTitle = type === 'draft' ? 'Simpan sebagai Draft?' : 'Konfirmasi Pembayaran';
+                const confirmText = type === 'draft' ? 'Ya, Simpan' : 'Ya, Proses Sekarang';
+
                 // Tampilkan konfirmasi dan loading
                 Swal.fire({
-                    title: 'Konfirmasi Pembayaran',
-                    text: `Total yang harus dibayar: Rp ${parseFloat(grandtotal).toLocaleString('id-ID')}`,
+                    title: modalTitle,
+                    text: type === 'draft' ? 'Transaksi akan disimpan di daftar tunggu.' :
+                        `Total Bayar: Rp ${parseFloat(grandtotal).toLocaleString('id-ID')}`,
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonText: 'Ya, Proses Sekarang',
@@ -2093,7 +2188,6 @@
 
                         const details = (typeof racikanDetails !== 'undefined') ? racikanDetails : null;
                         // Di dalam event listener submit
-
                         if (window.APP_CONFIG.allow_negative == 0) {
                             let itemsBermasalah = [];
 
@@ -2115,6 +2209,7 @@
                             }
                         }
                         // Jika lolos cek stok, baru jalankan fetch
+                        // console.log(items);
 
                         // Proses Fetch
                         fetch("{{ route('SalesMstr.store') }}", {
@@ -2184,8 +2279,13 @@
                                             frame.contentWindow.focus();
                                             frame.contentWindow.print();
                                         };
+                                        clearCart()
+                                    } else {
+                                        clearCart()
+                                        if (typeof updateHoldList === 'function') {
+                                            updateHoldList();
+                                        }
                                     }
-                                    if (type === 'paid') clearCart();
 
                                     // Opsi: window.location.reload(); jika ingin reset total
                                 });
@@ -2200,6 +2300,16 @@
                             });
                     }
                 });
+                // clearCart();
+
+            }
+
+            function clearCart() {
+                cartBody.innerHTML = '';
+                document.getElementById('disc_global_value').value = 0;
+                document.getElementById('paymentInput').value = 0;
+                document.getElementById('change').value = 0;
+                recalc();
             }
 
             function rupiah(n) {

@@ -29,7 +29,11 @@ class BpbMstrController extends Controller
 
     public function create()
     {
-        $pos = PoMstr::with('supplier')->get();
+        $pos = PoMstr::with('supplier')
+            ->whereHas('details', function ($query) {
+                $query->where('po_det_qtyremain', '>', 0);
+            })
+            ->get();
         $locs = LocMstr::all();
         return view('bpb.BpbMstrForm', compact('pos', 'locs'));
     }

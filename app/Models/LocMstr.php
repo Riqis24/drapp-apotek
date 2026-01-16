@@ -15,6 +15,7 @@ class LocMstr extends Model
     protected $fillable = [
         'loc_mstr_code',
         'loc_mstr_name',
-        'loc_mstr_active'
+        'loc_mstr_active',
+        'loc_mstr_isvisible'
     ];
 }

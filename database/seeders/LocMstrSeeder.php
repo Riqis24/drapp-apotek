@@ -18,11 +18,13 @@ class LocMstrSeeder extends Seeder
                 'loc_mstr_code' => 'WH-001',
                 'loc_mstr_name' => 'Apotek',
                 'loc_mstr_active' => '1',
+                'loc_mstr_isvisible' => '1',
             ],
             [
                 'loc_mstr_code' => 'WH-002',
                 'loc_mstr_name' => 'Gudang Owner',
                 'loc_mstr_active' => '1',
+                'loc_mstr_isvisible' => '0',
             ],
 
         ]);
