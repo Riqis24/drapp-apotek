@@ -119,7 +119,8 @@ class SalesMstrController extends Controller
 
 
         // dd($prices);
-        $session = CashierSession::where('user_id', auth()->user()->user_mstr_id)->whereDate('opened_at', now()->day)->value('status');
+        $session = CashierSession::where('user_id', auth()->user()->user_mstr_id)->where('status', 'open')->value('status');
+        // $session = CashierSession::where('user_id', auth()->user()->user_mstr_id)->whereDate('opened_at', now()->day)->value('status');
         // dd($session);
         $locations = LocMstr::get();
         $customers = Customer::get();
@@ -307,7 +308,7 @@ class SalesMstrController extends Controller
             if (!empty($det->sales_det_pmid)) {
                 $pres = PresMstr::with('details')->find($det->sales_det_pmid);
                 return [
-                    // 'price_id'      => $det->sales_det_priceid,
+                    'prescode'      => $det->sales_det_prescode,
                     'product_id'    => 0,
                     'measurement_id' => 0,
                     'qty'           => $det->sales_det_qty,
@@ -413,6 +414,7 @@ class SalesMstrController extends Controller
             // dd($request->paymentInput, $changee);
 
             if ($request->holdid) {
+                // dd("ini hold idnya = " . $request->holdid);
                 // Resume hold → update SO existing
                 $sales = SalesMstr::findOrFail($request->holdid);
                 $sales->update([
@@ -457,46 +459,17 @@ class SalesMstrController extends Controller
 
             $subtotal = 0;
 
-            // dd($request->details);
-            if ($request->details) {
-                foreach ($request->details as $keyRacik => $racik) {
-                    // Ambil jumlah bungkus untuk pengiraan stok yang tepat
-                    $jmlBungkus = (float) ($racik['jumlah_bungkus'] ?? 1);
-                    $namaRacik = $racik['nama'] ?? 'Racikan';
 
-                    foreach ($racik['details'] as $index => $bahan) {
-                        $pm = ProductMeasurements::where('product_id', $bahan['product_id'])
-                            ->where('measurement_id', $bahan['measurement_id'])
-                            ->firstOrFail();
-
-                        $conversion = (float) $pm->conversion;
-
-                        // PENTING: Stok yang keluar adalah (Qty Bahan * Jumlah Bungkus)
-                        $qtyBase = (float) $bahan['qty'] * $jmlBungkus * $conversion;
-
-                        // Stok terus dikurangkan walaupun statusnya HOLD
-                        // Kerana ubat sudah hancur/diadun
-                        if (empty($request->holdid)) {
-                            $this->processStockOutFIFO(
-                                $bahan['product_id'],
-                                $request->loc_id,
-                                $qtyBase,
-                                $sales->sales_mstr_id, // ID transaksi (walaupun status DRAFT/HOLD)
-                            );
-                        }
-                    }
-                }
-            } else {
-                foreach ($request->items as $item) {
-                    if ($item['type'] === 'bundle') {
-                        $this->processBundleItem($sales, $item, $request);
-                    } elseif ($item['type'] === 'racikan') { // <--- Tambahkan ini
-                        $this->processRacikanItem($sales, $item, $request);
-                    } else {
-                        $this->processSingleItem($sales, $item, $request);
-                    }
+            foreach ($request->items as $item) {
+                if ($item['type'] === 'bundle') {
+                    $this->processBundleItem($sales, $item, $request);
+                } elseif ($item['type'] === 'racikan') {
+                    $this->processRacikanItem($sales, $item, $request);
+                } else {
+                    $this->processSingleItem($sales, $item, $request);
                 }
             }
+
 
 
 
@@ -724,73 +697,95 @@ class SalesMstrController extends Controller
 
     protected function processRacikanItem($sales, $item, $request)
     {
+        // dd($item);
         $idUnik = $item['price_id'];
         $dataRacik = $request->details[$idUnik] ?? null;
-
+        // dd($idUnik);
         if (!$dataRacik) return;
-
+        // dd($request->details[$idUnik]);
         // 1. SIMPAN HEADER RESEP
-        $prescription = PresMstr::create([
-            'pres_mstr_code'      => 'RCK-' . time(),
-            'pres_mstr_name'      => $dataRacik['nama'],
-            'pres_mstr_doctor'    => $request->doctor_name ?? 'Umum',
-            'pres_mstr_type'      => 'prescription',
-            'pres_mstr_qty'       => $dataRacik['jumlah_bungkus'],
-            'pres_mstr_status'    => 'ready',
-            'pres_mstr_mat'       => $dataRacik['total'] - $dataRacik['jasa'] - $dataRacik['markup'],
-            'pres_mstr_fee'       => $dataRacik['jasa'] ?? 0,
-            'pres_mstr_mark'      => $dataRacik['markup'] ?? 0,
-            'pres_mstr_total'     => $dataRacik['total'],
-            'pres_mstr_smid'      => $sales->sales_mstr_id,
-            'pres_mstr_createdby' => auth()->user()->user_mstr_id,
-        ]);
+        $oldStatus = $sales->getOriginal('sales_mstr_status');
+        $isAlreadyReduced = ($oldStatus === 'hold');
+
+        $prescription = PresMstr::updateOrCreate(
+            ['pres_mstr_smid' => $sales->sales_mstr_id, 'pres_mstr_name' => $dataRacik['nama']],
+            [
+                'pres_mstr_code'      => 'RCK-' . ($prescription->pres_mstr_code ?? time()), // Pertahankan kode lama jika update
+                'pres_mstr_doctor'    => $request->doctor_name ?? 'Umum',
+                'pres_mstr_type'      => 'prescription',
+                'pres_mstr_qty'       => $dataRacik['jumlah_bungkus'],
+                'pres_mstr_status'    => 'ready',
+                'pres_mstr_mat'       => $dataRacik['total'] - ($dataRacik['jasa'] ?? 0) - ($dataRacik['markup'] ?? 0),
+                'pres_mstr_fee'       => $dataRacik['jasa'] ?? 0,
+                'pres_mstr_mark'      => $dataRacik['markup'] ?? 0,
+                'pres_mstr_total'     => $dataRacik['total'],
+                'pres_mstr_createdby' => auth()->user()->user_mstr_id,
+            ]
+        );
+
+        // dd($prescription);
+
 
         // 2. LOOP BAHAN BAKU
-        foreach ($dataRacik['details'] as $bahan) {
-            $pm = ProductMeasurements::where('product_id', $bahan['product_id'])
-                ->where('measurement_id', $bahan['measurement_id'])
-                ->firstOrFail();
+        if (!$isAlreadyReduced) {
+            foreach ($dataRacik['details'] as $bahan) {
+                $pm = ProductMeasurements::where('product_id', $bahan['product_id'])
+                    ->where('measurement_id', $bahan['measurement_id'])
+                    ->firstOrFail();
 
-            $conversion = (float) $pm->conversion;
-            $qtyBase    = (float) $bahan['qty'] * $conversion;
+                $conversion = (float) $pm->conversion;
+                $qtyBase    = (float) $bahan['qty'] * $conversion;
+                // dd($qtyBase);
+                // FIFO
+                $appliedBatches = $this->processStockOutFIFO(
+                    $bahan['product_id'],
+                    $request->loc_id,
+                    $qtyBase,
+                    $sales->sales_mstr_id
+                );
 
-            // FIFO
-            $appliedBatches = $this->processStockOutFIFO(
-                $bahan['product_id'],
-                $request->loc_id,
-                $qtyBase,
-                $sales->sales_mstr_id
-            );
+                // dd($appliedBatches);
 
-            // Simpan Detail Resep (Bisa banyak baris jika pecah batch)
-            foreach ($appliedBatches as $ab) {
-                $prescription->details()->create([
-                    'pres_det_productid' => $bahan['product_id'],
-                    'pres_det_um'        => $bahan['measurement_id'],
-                    'pres_det_batchid'   => $ab['batch_id'],
-                    'pres_det_qty'       => $ab['qty'] / $conversion, // Kembalikan ke satuan yang dipilih
-                    'pres_det_price'     => $bahan['price'],
-                ]);
+                // Simpan Detail Resep (Bisa banyak baris jika pecah batch)
+                foreach ($appliedBatches as $ab) {
+                    $prescription->details()->create([
+                        'pres_det_productid' => $bahan['product_id'],
+                        'pres_det_um'        => $bahan['measurement_id'],
+                        'pres_det_batchid'   => $ab['batch_id'],
+                        'pres_det_qty'       => $ab['qty'] / $conversion, // Kembalikan ke satuan yang dipilih
+                        'pres_det_price'     => $bahan['price'],
+                    ]);
+                }
             }
         }
 
+
+        // dd($sales);
+
         // 3. SIMPAN KE DETAIL PENJUALAN (Cukup 1 Baris per Racikan)
         // diletakkan di luar loop detail bahan
-        $sales->details()->create([
-            'sales_det_productid' => 0, // 0 menandakan ini item non-inventory/racikan
-            'sales_det_qty'       => $item['qty'], // Ini adalah jumlah_bungkus (misal: 10)
-            'sales_det_qtyconv'   => $item['qty'],
-            'sales_det_parentid'  => null,
-            'sales_det_um'        => $item['measurement_id'],
-            'sales_det_umconv'    => 1,
-            'sales_det_price'     => $item['price'],
-            'sales_det_priceconv'     => $item['price'],
-            'sales_det_subtotal'  => $item['qty'] * $item['price'],
-            'sales_det_type'      => 'racikan',
-            'sales_det_comp'      => true,
-            'sales_det_pmid'      => $prescription->pres_mstr_id, // Link ke header racikan
-            'sales_det_locid'     => $request->loc_id,
-        ]);
+        $salesdet = $sales->details()->updateOrCreate(
+            [
+                'sales_det_pmid' => $prescription->pres_mstr_id,
+                'sales_det_type' => 'racikan'
+            ],
+            [
+                'sales_det_productid' => 0,
+                'sales_det_prescode'  => $idUnik,
+                'sales_det_qty'       => $item['qty'],
+                'sales_det_qtyconv'   => $item['qty'],
+                'sales_det_parentid'  => null,
+                'sales_det_um'        => $item['measurement_id'],
+                'sales_det_umconv'    => 1,
+                'sales_det_price'     => $item['price'],
+                'sales_det_priceconv' => $item['price'],
+                'sales_det_subtotal'  => $item['qty'] * $item['price'],
+                'sales_det_comp'      => true,
+                'sales_det_locid'     => $request->loc_id,
+            ]
+        );
+
+        // dd($salesdet);
     }
 
     private function processStockOutFIFO($productId, $locId, $qty, $sourceId)

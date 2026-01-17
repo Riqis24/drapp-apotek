@@ -20,6 +20,7 @@ class SalesDet extends Model
     protected $fillable = [
         'sales_det_mstrid',
         'sales_det_productid',
+        'sales_det_prescode',
 
         // UM & konversi
         'sales_det_um',

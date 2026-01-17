@@ -16,6 +16,7 @@ return new class extends Migration
 
             $table->unsignedBigInteger('sales_det_mstrid');
             $table->unsignedBigInteger('sales_det_productid');
+            $table->string('sales_det_prescode')->nullable();
 
             // UM & konversi
             $table->unsignedBigInteger('sales_det_um')->nullable();

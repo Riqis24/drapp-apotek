@@ -1608,7 +1608,7 @@
                 tr.setAttribute('data-rowid', rowId);
                 // -----------------------------------------------------------------
 
-                tr.dataset.priceid = item.id;
+                tr.dataset.priceid = item.id || item.prescode;
                 tr.dataset.type = item.type;
 
                 tr.querySelector('.item-name').innerHTML = `
