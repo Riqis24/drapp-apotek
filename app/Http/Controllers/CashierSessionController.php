@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\StoreCashierSessionRequest;
 use App\Http\Requests\UpdateCashierSessionRequest;
+use App\Models\LocMstr;
 
 class CashierSessionController extends Controller
 {
@@ -124,83 +125,103 @@ class CashierSessionController extends Controller
     {
         DB::beginTransaction();
         try {
-            $apotek = StoreProfile::first();
-            // Coba pastikan userId ini memang yang tercatat di sales_mstr_createdby
-            $userId = auth()->user()->user_mstr_id;
-            $today = now()->toDateString();
+            $activeSession = CashierSession::where('user_id', auth()->user()->user_mstr_id)
+                ->where('loc_id', $request->loc)
+                ->where('status', 'open')
+                ->latest('opened_at')
+                ->first();
 
-            // 1. Ambil Master Sales
-            $sales = SalesMstr::where('sales_mstr_createdby', $userId)
-                ->whereDate('sales_mstr_date', $today)
-                ->get();
+            if (!$activeSession) {
+                return response()->json(['success' => false, 'message' => 'Tidak ada sesi kasir aktif.'], 400);
+            }
 
-            // DEBUG: Jika count tetap 0, coba hapus baris ->where('sales_mstr_createdby', $userId) 
-            // untuk memastikan apakah datanya memang ada atau hanya masalah filter user.
-
-            // 2. Query Rincian Item (Gunakan Pluck ID dari $sales agar lebih akurat)
-            $salesIds = $sales->pluck('sales_mstr_id');
-
-            $rincianItem = DB::table('sales_det')
-                ->join('products', 'sales_det.sales_det_productid', '=', 'products.id')
-                ->join('measurements', 'sales_det.sales_det_um', '=', 'measurements.id')
-                ->whereIn('sales_det.sales_det_mstrid', $salesIds)
-                ->select(
-                    'products.name as product_name',
-                    'measurements.name as satuan', // Satuan saat transaksi (Strip/Tablet/Botol)
-                    'sales_det.sales_det_qtyconv as konversi', // Nilai konversi jika perlu audit
-                    DB::raw('SUM(sales_det.sales_det_qty) as total_qty'),
-                    DB::raw('SUM(sales_det.sales_det_subtotal) as total_price')
-                )
-                ->groupBy('products.name', 'measurements.name', 'sales_det.sales_det_qtyconv')
-                ->get();
-
-            // dd($rincianItem);
-
-            // 3. Kalkulasi (Gunakan Variabel yang sudah dihitung)
-            $bruto       = $sales->sum('sales_mstr_subtotal');
-            $diskon      = $sales->sum('sales_mstr_discamt');
-            $ppn         = $sales->sum('sales_mstr_ppnamt');
-            $totalOmzet  = $sales->sum('sales_mstr_grandtotal');
-            $totalPaid   = $sales->sum('sales_mstr_paidamt');
-            $totalChange = $sales->sum('sales_mstr_changeamt');
-            $netTunai    = $totalPaid - $totalChange;
-
-            // Piutang: Semua nota yang BELUM bayar lunas
-            $totalPiutang = $sales->sum(function ($item) {
-                return $item->sales_mstr_grandtotal - $item->sales_mstr_paidamt;
-            });
-
-            $data = [
-                'kasir'     => auth()->user()->user_mstr_name, // Gunakan nama user
-                'tanggal'   => now()->format('d/m/Y H:i'),
-                'rincian'   => $rincianItem,
-                'omzet'     => $totalOmzet,
-                'bruto'     => $bruto,
-                'diskon'    => $diskon,
-                'ppn'       => $ppn,
-                'tunai'     => $netTunai,
-                'piutang'   => $totalPiutang,
-                'kembalian' => $totalChange,
-                'count'     => $sales->count(),
-                'apotek'    => $apotek,
-            ];
-
-            $pdf = Pdf::loadView('sales.tutupkasir', $data);
-            $pdf->setPaper([0, 0, 140, 1500], 'portrait');
-
-            $fileName = 'rekap/REKAP-' . $userId . '-' . date('YmdHis') . '.pdf';
-            Storage::disk('public')->put($fileName, $pdf->output());
+            $activeSession->update([
+                'status' => 'closed',
+                'closed_at' => now(),
+            ]);
 
             DB::commit();
 
+            // Kirim URL ke route khusus yang menampilkan view print
             return response()->json([
                 'success' => true,
-                'pdf_url' => asset('storage/' . $fileName)
+                'print_url' => route('CashierSession.print', $activeSession->id)
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    public function print($id)
+    {
+        $activeSession = CashierSession::findOrFail($id);
+        $apotek = StoreProfile::first();
+        $userId = $activeSession->user_id;
+
+        $sales = SalesMstr::where('cashier_session_id', $activeSession->id)->get();
+        $salesIds = $sales->pluck('sales_mstr_id');
+
+        $rincianItem = DB::table('sales_det')
+            ->join('products', 'sales_det.sales_det_productid', '=', 'products.id')
+            ->join('measurements', 'sales_det.sales_det_um', '=', 'measurements.id')
+            ->whereIn('sales_det.sales_det_mstrid', $salesIds)
+            ->select(
+                'products.name as product_name',
+                'measurements.name as satuan', // Satuan saat transaksi (Strip/Tablet/Botol)
+                'sales_det.sales_det_qtyconv as konversi', // Nilai konversi jika perlu audit
+                DB::raw('SUM(sales_det.sales_det_qty) as total_qty'),
+                DB::raw('SUM(sales_det.sales_det_subtotal) as total_price')
+            )
+            ->groupBy('products.name', 'measurements.name', 'sales_det.sales_det_qtyconv')
+            ->get();
+
+        // dd($rincianItem);
+
+        // 3. Kalkulasi (Gunakan Variabel yang sudah dihitung)
+        $bruto       = $sales->sum('sales_mstr_subtotal');
+        $diskon      = $sales->sum('sales_mstr_discamt');
+        $ppn         = $sales->sum('sales_mstr_ppnamt');
+        $totalOmzet  = $sales->sum('sales_mstr_grandtotal');
+        $totalPaid   = $sales->sum('sales_mstr_paidamt');
+        $totalChange = $sales->sum('sales_mstr_changeamt');
+        $netTunai    = $totalPaid - $totalChange;
+
+        // Piutang: Semua nota yang BELUM bayar lunas
+        $totalPiutang = $sales->sum(function ($item) {
+            return $item->sales_mstr_grandtotal - $item->sales_mstr_paidamt;
+        });
+
+        $data = [
+            'kasir'     => auth()->user()->user_mstr_name, // Gunakan nama user
+            'tanggal'   => now()->format('d/m/Y H:i'),
+            'rincian'   => $rincianItem,
+            'omzet'     => $totalOmzet,
+            'bruto'     => $bruto,
+            'diskon'    => $diskon,
+            'ppn'       => $ppn,
+            'tunai'     => $netTunai,
+            'piutang'   => $totalPiutang,
+            'kembalian' => $totalChange,
+            'count'     => $sales->count(),
+            'apotek'    => $apotek,
+        ];
+
+        // dd($data);
+
+        return view('sales.tutupkasir', compact('activeSession', 'apotek', 'sales', 'data'));
+    }
+
+    public function cashier()
+    {
+        $activeSession = CashierSession::where('user_id', auth()->user()->user_mstr_id)
+            ->where('status', 'open')
+            ->first();
+
+        return view('sales.cashier2', [
+            'hasActiveSession' => $activeSession ? true : false,
+            'locations' => LocMstr::all()
+        ]);
     }
 
     public function index()

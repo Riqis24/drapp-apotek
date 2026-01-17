@@ -202,7 +202,8 @@ Route::middleware('auth')->group(function () {
     Route::delete('/ts/detail/{detId}', [TsDetController::class, 'destroyDetail']);
 
     Route::post('/CashierSession/open', [CashierSessionController::class, 'open'])->name('CashierSession.open');
-    Route::get('/CashierSession/close', [CashierSessionController::class, 'close'])->name('CashierSession.close');
+    Route::post('/CashierSession/close', [CashierSessionController::class, 'close'])->name('CashierSession.close');
+    Route::get('/CashierSession/print/{id}', [CashierSessionController::class, 'print'])->name('CashierSession.print');
 
     Route::resource('StoreProfile', StoreProfileController::class);
     Route::resource('dashboard', DashboardController::class);

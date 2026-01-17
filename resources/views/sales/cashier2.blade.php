@@ -1039,6 +1039,23 @@
     @push('scripts')
         <script src="{{ asset('assets/js/alert.js') }}"></script>
         <script>
+            $(document).ready(function() {
+                // Cek variabel dari Laravel
+                const hasActiveSession = @json($session);
+
+                if (!hasActiveSession) {
+                    // Jika menggunakan Bootstrap 5
+                    var myModal = new bootstrap.Modal(document.getElementById('openCashierModal'));
+                    myModal.show();
+
+                    // Fokuskan ke input opening amount
+                    $('#openCashierModal').on('shown.bs.modal', function() {
+                        $('#open_amount').focus();
+                    });
+                }
+            });
+        </script>
+        <script>
             function togglePaymentMethod(status) {
                 const methodWrapper = document.getElementById('payment_method_wrapper');
                 const paymentInput = document.getElementById('paymentInput');
@@ -2342,6 +2359,7 @@
             $(document).ready(function() {
                 $('#closeCashierBtn').on('click', function(e) {
                     e.preventDefault();
+                    const loc = document.getElementById('location').value;
 
                     Swal.fire({
                         title: 'Konfirmasi Tutup Kasir',
@@ -2369,38 +2387,25 @@
                                 method: "POST",
                                 data: {
                                     _token: "{{ csrf_token() }}",
-                                    // tambahkan data lain jika perlu, misal: saldo_fisik: $('#inputSaldo').val()
+                                    loc: loc
                                 },
                                 success: function(response) {
                                     if (response.success) {
                                         Swal.close();
 
-                                        // 1. Buka PDF di window baru untuk print
-                                        let printWindow = window.open(response.url,
+                                        // Buka tab baru untuk print
+                                        let printWindow = window.open(response.print_url,
                                             '_blank');
 
-                                        // 2. Trigger print setelah loading selesai
-                                        if (printWindow) {
-                                            printWindow.onload = function() {
-                                                printWindow.print();
-                                            };
-                                        }
-
-                                        // 3. Notifikasi Sukses Akhir
                                         Swal.fire({
                                             icon: 'success',
-                                            title: 'Berhasil!',
-                                            text: 'Kasir telah ditutup.',
-                                            timer: 2000,
-                                            showConfirmButton: false
+                                            title: 'Kasir Ditutup',
+                                            text: 'Mencetak rekap...',
+                                            timer: 2000
                                         }).then(() => {
-                                            // Redirect atau reload halaman
-                                            window.location.href =
-                                                "{{ route('SalesMstr.cashier') }}";
+                                            window.location
+                                                .reload(); // Refresh halaman kasir
                                         });
-
-                                    } else {
-                                        Swal.fire('Gagal!', response.message, 'error');
                                     }
                                 },
                                 error: function(xhr) {

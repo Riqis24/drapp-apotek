@@ -121,7 +121,7 @@ class SalesMstrController extends Controller
         // dd($prices);
         $session = CashierSession::where('user_id', auth()->user()->user_mstr_id)->where('status', 'open')->value('status');
         // $session = CashierSession::where('user_id', auth()->user()->user_mstr_id)->whereDate('opened_at', now()->day)->value('status');
-        // dd($session);
+        dd($session);
         $locations = LocMstr::get();
         $customers = Customer::get();
         return view('sales.cashier', compact('locations', 'items', 'holds', 'dueAps', 'customers', 'session'));
@@ -225,7 +225,7 @@ class SalesMstrController extends Controller
 
         $now = now();
         // dd($now);
-        $session = CashierSession::where('user_id', auth()->user()->user_mstr_id)->whereDate('opened_at', $now)->value('status');
+        $session = CashierSession::where('user_id', auth()->user()->user_mstr_id)->where('status', 'open')->value('status');
         // dd($session);
 
         if ($roleAdmin || $roleKasir) {
@@ -235,6 +235,8 @@ class SalesMstrController extends Controller
             $locations = LocMstr::get();
             $customers = Customer::get();
         }
+
+
 
         // dd($locations);
         return view('sales.cashier2', compact('locations', 'items', 'holds', 'dueAps', 'customers', 'session'));
@@ -705,7 +707,7 @@ class SalesMstrController extends Controller
         // dd($request->details[$idUnik]);
         // 1. SIMPAN HEADER RESEP
         $oldStatus = $sales->getOriginal('sales_mstr_status');
-        $isAlreadyReduced = ($oldStatus === 'hold');
+        $isAlreadyReduced = ($oldStatus === 'draft');
 
         $prescription = PresMstr::updateOrCreate(
             ['pres_mstr_smid' => $sales->sales_mstr_id, 'pres_mstr_name' => $dataRacik['nama']],
@@ -767,11 +769,11 @@ class SalesMstrController extends Controller
         $salesdet = $sales->details()->updateOrCreate(
             [
                 'sales_det_pmid' => $prescription->pres_mstr_id,
-                'sales_det_type' => 'racikan'
+                'sales_det_type' => 'racikan',
+                'sales_det_prescode'  => $idUnik,
             ],
             [
                 'sales_det_productid' => 0,
-                'sales_det_prescode'  => $idUnik,
                 'sales_det_qty'       => $item['qty'],
                 'sales_det_qtyconv'   => $item['qty'],
                 'sales_det_parentid'  => null,
