@@ -89,8 +89,12 @@
                 @else
                     <td class="text-right">{{ number_format($item->sales_det_price, 0, ',', '.') }}</td>
                 @endif
-                <td class="text-right">
-                    {{ number_format($item->sales_det_subtotal + $item->sales_det_discamt, 0, ',', '.') }}</td>
+                @if (!empty($item->sales_det_parentid))
+                    <td></td>
+                @else
+                    <td class="text-right">
+                        {{ number_format($item->sales_det_subtotal + $item->sales_det_discamt, 0, ',', '.') }}</td>
+                @endif
             </tr>
 
             {{-- TAMPILKAN DISKON JIKA ADA --}}
