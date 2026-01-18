@@ -84,7 +84,11 @@
             </tr>
             <tr>
                 <td style="width: 30%;">{{ (float) $item->sales_det_qty }} x</td>
-                <td class="text-right">{{ number_format($item->sales_det_price, 0, ',', '.') }}</td>
+                @if (!empty($item->sales_det_parentid))
+                    <td></td>
+                @else
+                    <td class="text-right">{{ number_format($item->sales_det_price, 0, ',', '.') }}</td>
+                @endif
                 <td class="text-right">
                     {{ number_format($item->sales_det_subtotal + $item->sales_det_discamt, 0, ',', '.') }}</td>
             </tr>
