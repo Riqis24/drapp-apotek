@@ -118,6 +118,16 @@
         {{-- Jika ada pembayaran tunai, tampilkan kembalian --}}
         @if ($transaction->sales_mstr_paidamt > 0)
             <tr>
+                <td class="text-right" style="font-size: 9pt;">Disc:</td>
+                <td class="text-right" style="font-size: 9pt;">
+                    {{ number_format($transaction->sales_mstr_discamt, 0, ',', '.') }}</td>
+            </tr>
+            <tr>
+                <td class="text-right" style="font-size: 9pt;">PPN:</td>
+                <td class="text-right" style="font-size: 9pt;">
+                    {{ number_format($transaction->sales_mstr_ppnamt, 0, ',', '.') }}</td>
+            </tr>
+            <tr>
                 <td class="text-right" style="font-size: 9pt;">Bayar:</td>
                 <td class="text-right" style="font-size: 9pt;">
                     {{ number_format($transaction->sales_mstr_paidamt, 0, ',', '.') }}</td>
