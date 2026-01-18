@@ -6,20 +6,19 @@
             </a>
         </header>
         <div class="page-heading">
-            <h3>Transfer Sheet</h3>
+            <h3>Pemindahan Barang</h3>
         </div>
         <div class="page-content">
             <div class="card">
                 <div class="card-header">
                     <button class="btn btn-outline-primary btn-sm rounded" type="button"
                         onclick="window.location.href='{{ route('TsMstr.create') }}'">
-                        Create Transfer Sheet
+                        Create Pemindahan Barang
                     </button>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="ExpenseTable" class="table table-striped table-bordered table-sm nowrap"
-                            style="width:100%">
+                        <table id="TsTable" class="table table-striped table-bordered table-sm nowrap">
                             <thead>
                                 <tr>
                                     <th>No</th>
@@ -28,6 +27,7 @@
                                     <th>Dari</th>
                                     <th>Ke</th>
                                     <th>Status</th>
+                                    <th></th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -53,7 +53,7 @@
                                                     onclick="handleDelete('{{ $ts->ts_mstr_id }}')">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
-                                        </form>
+                                            </form>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -67,7 +67,17 @@
     </div>
 
     @push('scripts')
-        <script src="{{ 'assets/js/ExpenseTr/getData.js' }}"></script>
+        {{-- <script src="{{ 'assets/js/ExpenseTr/getData.js' }}"></script> --}}
+        <script>
+            $("#TsTable").DataTable({
+                scrollX: true, // Wajib untuk tabel lebar seperti ini
+                scrollY: "350px",
+                scrollCollapse: true,
+                autoWidth: false, // MATIKAN agar kita bisa kontrol via CSS
+                paging: true,
+
+            });
+        </script>
         <script src="{{ 'assets/js/alert.js' }}"></script>
         <script>
             function handleDelete(id) {

@@ -31,6 +31,7 @@
                                     <th>Dibayar</th>
                                     <th>Sisa</th>
                                     <th>Status</th>
+                                    <th>Created At</th>
                                     <th>Aksi</th>
                                 </tr>
                             </thead>
@@ -50,6 +51,9 @@
                                                 class="badge bg-{{ $ar->ar_mstr_status == 'paid' ? 'success' : ($ar->ar_mstr_status == 'partial' ? 'warning' : 'danger') }}">
                                                 {{ strtoupper($ar->ar_mstr_status) }}
                                             </span>
+                                        </td>
+                                        <td>
+                                            {{ $ar->created_at }}
                                         </td>
                                         <td>
                                             <a href="{{ route('ArpayMstr.show', $ar->ar_mstr_id) }}"

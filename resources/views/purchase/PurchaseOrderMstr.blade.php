@@ -36,6 +36,7 @@
                                     <th style="text-align: center">Payment</th>
                                     <th style="text-align: center">Jatuh Tempo</th>
                                     <th style="text-align: center">Created By</th>
+                                    <th style="text-align: center">Created At</th>
                                     <th style="text-align: center">Aksi</th>
                                 </tr>
                             </thead>
@@ -55,6 +56,7 @@
                                         <td>{{ $item->po_mstr_duedate }}</td>
                                         <td>{{ $item->po_mstr_note }}</td>
                                         <td>{{ $item->user->user_mstr_name }}</td>
+                                        <td>{{ $item->po_mstr_createdat }}</td>
                                         <td>
                                             <button class="btn btn-sm btn-info" type="button"
                                                 onclick="window.open('{{ route('PurchaseOrder.show', $item->po_mstr_id) }}')">

@@ -18,7 +18,7 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="ExpenseTable" class="table table-striped table-bordered table-sm nowrap"
+                        <table id="SoTable" class="table table-striped table-bordered table-sm nowrap"
                             style="width:100%">
                             <thead>
                                 <tr>
@@ -75,7 +75,16 @@
     </div>
 
     @push('scripts')
-        <script src="{{ 'assets/js/ExpenseTr/getData.js' }}"></script>
+        <script>
+            $("#SoTable").DataTable({
+                scrollX: true, // Wajib untuk tabel lebar seperti ini
+                scrollY: "350px",
+                scrollCollapse: true,
+                autoWidth: false, // MATIKAN agar kita bisa kontrol via CSS
+                paging: true,
+
+            });
+        </script>
         <script src="{{ 'assets/js/alert.js' }}"></script>
         <script>
             function handleDelete(id) {

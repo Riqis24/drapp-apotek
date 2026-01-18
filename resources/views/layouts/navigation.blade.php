@@ -19,18 +19,18 @@
             class="sidebar-item has-sub {{ Request::is('SalesMstr*', 'SrMstr*', 'ExpenseTransaction*', 'ArMstr*') ? 'active' : '' }}">
             <a href="#" class="sidebar-link">
                 <i class="bi bi-coin"></i>
-                <span>Transaction</span>
+                <span>Penjualan</span>
             </a>
             <ul
                 class="submenu {{ Request::is('SalesMstr*', 'SrMstr*', 'ExpenseTransaction*', 'ArMstr*') ? 'active' : '' }}">
                 <li class="submenu-item {{ Route::is('SalesMstr.index') ? 'active' : '' }}">
-                    <a href="{{ route('SalesMstr.index') }}" class="submenu-link">Sales Transaction</a>
+                    <a href="{{ route('SalesMstr.index') }}" class="submenu-link">Invoice Penjualan</a>
                 </li>
                 <li class="submenu-item {{ Route::is('SrMstr.index') ? 'active' : '' }}">
-                    <a href="{{ route('SrMstr.index') }}" class="submenu-link">Sales Return</a>
+                    <a href="{{ route('SrMstr.index') }}" class="submenu-link">Retur Penjualan</a>
                 </li>
                 <li class="submenu-item {{ Route::is('ExpenseTransaction.*') ? 'active' : '' }}">
-                    <a href="{{ route('ExpenseTransaction.index') }}" class="submenu-link">Expense Transaction</a>
+                    <a href="{{ route('ExpenseTransaction.index') }}" class="submenu-link">Pengeluaran</a>
                 </li>
                 <li class="submenu-item {{ Route::is('ArMstr.*') ? 'active' : '' }}">
                     <a href="{{ route('ArMstr.index') }}" class="submenu-link">Piutang Usaha</a>
@@ -42,14 +42,14 @@
                 class="sidebar-item has-sub {{ Request::is('PurchaseOrder*', 'PrMstr*', 'BpbMstr*', 'ApMstr*') ? 'active' : '' }}">
                 <a href="#" class="sidebar-link">
                     <i class="bi bi-cart"></i>
-                    <span>Purchasing</span>
+                    <span>Pembelian</span>
                 </a>
                 <ul class="submenu {{ Request::is('PurchaseOrder*', 'PrMstr*', 'BpbMstr*', 'ApMstr*') ? 'active' : '' }}">
                     <li class="submenu-item {{ Route::is('PurchaseOrder.*') ? 'active' : '' }}">
-                        <a href="{{ route('PurchaseOrder.index') }}" class="submenu-link">Purchase Order</a>
+                        <a href="{{ route('PurchaseOrder.index') }}" class="submenu-link">Pesanan Pembelian</a>
                     </li>
                     <li class="submenu-item {{ Route::is('PrMstr.index') ? 'active' : '' }}">
-                        <a href="{{ route('PrMstr.index') }}" class="submenu-link">Purchase Return</a>
+                        <a href="{{ route('PrMstr.index') }}" class="submenu-link">Retur Pembelian</a>
                     </li>
                     <li class="submenu-item {{ Route::is('BpbMstr.*') ? 'active' : '' }}">
                         <a href="{{ route('BpbMstr.index') }}" class="submenu-link">Penerimaan Barang</a>
@@ -62,7 +62,7 @@
             <li class="sidebar-item has-sub {{ Request::is('TsMstr*', 'SaMstr*', 'SoMstr*') ? 'active' : '' }}">
                 <a href="#" class="sidebar-link">
                     <i class="bi bi-box-seam"></i>
-                    <span>Inventory</span>
+                    <span>Persediaan</span>
                 </a>
                 <ul class="submenu {{ Request::is('TsMstr*', 'SaMstr*', 'SoMstr*') ? 'active' : '' }}">
                     <li class="submenu-item {{ Route::is('TsMstr.*') ? 'active' : '' }}">
@@ -87,17 +87,17 @@
                 class="submenu {{ Request::is('StockTransaction*', 'Stock/*', 'FinancialRecord*', 'ApMstr/SuppStatement*', 'ApMstr/Aging*') ? 'active' : '' }}">
                 @role(['Super Admin', 'Admin', 'Owner'])
                     <li class="submenu-item {{ Route::is('ApMstr.SuppStatement') ? 'active' : '' }}">
-                        <a href="{{ route('ApMstr.SuppStatement') }}" class="submenu-link">Supplier Statement</a>
+                        <a href="{{ route('ApMstr.SuppStatement') }}" class="submenu-link">Lap. Rekening Pemasok</a>
                     </li>
                     <li class="submenu-item {{ Route::is('ApMstr.AgingHutang') ? 'active' : '' }}">
-                        <a href="{{ route('ApMstr.AgingHutang') }}" class="submenu-link">Aging Hutang</a>
+                        <a href="{{ route('ApMstr.AgingHutang') }}" class="submenu-link">Umur Hutang</a>
                     </li>
                 @endrole
                 <li class="submenu-item {{ Route::is('StockTransaction.*') ? 'active' : '' }}">
                     <a href="{{ route('StockTransaction.index') }}" class="submenu-link">Transaksi histori</a>
                 </li>
                 <li class="submenu-item {{ Route::is('Stock.index') ? 'active' : '' }}">
-                    <a href="{{ route('Stock.index') }}" class="submenu-link">Stock</a>
+                    <a href="{{ route('Stock.index') }}" class="submenu-link">Stok Obat</a>
                 </li>
                 @role(['Super Admin', 'Admin', 'Owner'])
                     <li class="submenu-item {{ Route::is('FinancialRecord.*') ? 'active' : '' }}">

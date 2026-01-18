@@ -184,8 +184,21 @@ class CashierSessionController extends Controller
         $ppn         = $sales->sum('sales_mstr_ppnamt');
         $totalOmzet  = $sales->sum('sales_mstr_grandtotal');
         $totalPaid   = $sales->sum('sales_mstr_paidamt');
-        $totalChange = $sales->sum('sales_mstr_changeamt');
-        $netTunai    = $totalPaid - $totalChange;
+        $cashGross   =  $sales->where('sales_mstr_paymentmethod', 'cash')->sum('sales_mstr_paidamt');
+        $transferGross    =  $sales->where('sales_mstr_paymentmethod', 'transfer')->sum('sales_mstr_paidamt');
+        $qrisGross        =  $sales->where('sales_mstr_paymentmethod', 'qris')->sum('sales_mstr_paidamt');
+        $creditcardGross  =  $sales->where('sales_mstr_paymentmethod', 'credit')->sum('sales_mstr_paidamt');
+        // dd($cash, $transfer, $qris, $creditcard);
+        $cashChange = $sales->where('sales_mstr_paymentmethod', 'cash')->sum('sales_mstr_changeamt');
+        $transferChange = $sales->where('sales_mstr_paymentmethod', 'transfer')->sum('sales_mstr_changeamt');
+        $qrisChange = $sales->where('sales_mstr_paymentmethod', 'qris')->sum('sales_mstr_changeamt');
+        $creditcardChange = $sales->where('sales_mstr_paymentmethod', 'credit')->sum('sales_mstr_changeamt');
+        $cash    = $cashGross - $cashChange;
+        $transfer    = $transferGross - $transferChange;
+        $qris    = $qrisGross - $qrisChange;
+        $creditcard    = $creditcardGross - $creditcardChange;
+
+        $ttlTransactions = $cash + $transfer + $qris + $creditcard;
 
         // Piutang: Semua nota yang BELUM bayar lunas
         $totalPiutang = $sales->sum(function ($item) {
@@ -200,9 +213,12 @@ class CashierSessionController extends Controller
             'bruto'     => $bruto,
             'diskon'    => $diskon,
             'ppn'       => $ppn,
-            'tunai'     => $netTunai,
+            'cash'     => $cash,
+            'qris'     => $qris,
+            'ttlTransactions'     => $ttlTransactions,
+            'creditcard'     => $creditcard,
+            'transfer'     => $transfer,
             'piutang'   => $totalPiutang,
-            'kembalian' => $totalChange,
             'count'     => $sales->count(),
             'apotek'    => $apotek,
         ];

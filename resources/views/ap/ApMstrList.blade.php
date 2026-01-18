@@ -18,8 +18,7 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="ExpenseTable" class="table table-striped table-bordered table-sm nowrap"
-                            style="width:100%">
+                        <table id="ApTable" class="table table-striped table-bordered table-sm nowrap">
                             <thead class="table-dark">
                                 <tr>
                                     <th>No</th>
@@ -53,7 +52,7 @@
                                         </td>
                                         <td>
                                             <a href="{{ route('ApMstr.show', $ap->ap_mstr_id) }}"
-                                                class="btn btn-sm btn-primary"><i class="bi bi-folder"></i>
+                                                class="btn btn-sm btn-info"><i class="bi bi-folder"></i>
                                             </a>
 
                                         </td>
@@ -69,17 +68,13 @@
 
     @push('scripts')
         <script>
-            $(document).ready(function() {
-                $("#ExpenseTable").DataTable({
-                    responsive: true,
-                    autoWidth: true,
-                    // pageLength: 100,
-                    scrollY: "350px",
-                    lengthMenu: [
-                        [25, 20, 75, 100],
-                        [25, 20, 75, 100]
-                    ]
-                });
+            $("#ApTable").DataTable({
+                scrollX: true, // Wajib untuk tabel lebar seperti ini
+                scrollY: "350px",
+                scrollCollapse: true,
+                autoWidth: false, // MATIKAN agar kita bisa kontrol via CSS
+                paging: true,
+
             });
         </script>
         <script src="{{ 'assets/js/alert.js' }}"></script>

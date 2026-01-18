@@ -13,13 +13,12 @@
                 <div class="card-header">
                     <button class="btn btn-outline-primary btn-sm rounded" type="button"
                         onclick="window.location.href='{{ route('BpbMstr.create') }}'">
-                        Create BPB
+                        Create Penerimaan Barang
                     </button>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="ExpenseTable" class="table table-striped table-bordered table-sm nowrap"
-                            style="width:100%">
+                        <table id="BpbTable" class="table table-striped table-bordered table-sm nowrap">
                             <thead class="table-dark">
                                 <tr>
                                     <th style="text-align: center">No</th>
@@ -79,7 +78,16 @@
     </div>
 
     @push('scripts')
-        <script src="{{ 'assets/js/ExpenseTr/getData.js' }}"></script>
+        <script>
+            $("#BpbTable").DataTable({
+                scrollX: true, // Wajib untuk tabel lebar seperti ini
+                scrollY: "350px",
+                scrollCollapse: true,
+                autoWidth: false, // MATIKAN agar kita bisa kontrol via CSS
+                paging: true,
+
+            });
+        </script>
         <script>
             function confirmDelete(id) {
                 Swal.fire({

@@ -6,7 +6,7 @@
             </a>
         </header>
         <div class="page-heading">
-            <h3>Sales Transaction</h3>
+            <h3>invoice Penjualan</h3>
         </div>
         <div class="page-content">
             <div class="card">
@@ -14,8 +14,7 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="custTable" class="table table-striped table-bordered table-sm nowrap"
-                            style="width:100%">
+                        <table id="SalesTable" class="table table-striped table-bordered table-sm nowrap">
                             <thead class="table-dark">
                                 <tr>
                                     <th style="width:5%; text-align: center">No</th>
@@ -56,16 +55,18 @@
                                                 onclick="window.location.href='{{ route('SrMstr.create', $transaction->sales_mstr_id) }}'">
                                                 <i class="bi bi-cart-dash"></i>
                                             </button>
-                                            <form id="delete-sales-{{ $transaction->sales_mstr_id }}"
-                                                action="{{ route('SalesMstr.destroy', $transaction->sales_mstr_id) }}"
-                                                method="POST" class="d-inline">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="button" class="btn btn-sm btn-danger"
-                                                    onclick="confirmDeletePay('{{ $transaction->sales_mstr_id }}', '{{ $transaction->sales_mstr_nbr }}')">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            </form>
+                                            @role(['Super Admin'])
+                                                <form id="delete-sales-{{ $transaction->sales_mstr_id }}"
+                                                    action="{{ route('SalesMstr.destroy', $transaction->sales_mstr_id) }}"
+                                                    method="POST" class="d-inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="button" class="btn btn-sm btn-danger"
+                                                        onclick="confirmDeletePay('{{ $transaction->sales_mstr_id }}', '{{ $transaction->sales_mstr_nbr }}')">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                </form>
+                                            @endrole
                                         </td>
 
                                     </tr>
@@ -79,8 +80,18 @@
     </div>
 
     @push('scripts')
-        <script src="{{ 'assets/js/CustMstr/getData.js' }}"></script>
+        {{-- <script src="{{ 'assets/js/CustMstr/getData.js' }}"></script> --}}
         <script src="{{ 'assets/js/alert.js' }}"></script>
+        <script>
+            $("#SalesTable").DataTable({
+                scrollX: true, // Wajib untuk tabel lebar seperti ini
+                scrollY: "350px",
+                scrollCollapse: true,
+                autoWidth: false, // MATIKAN agar kita bisa kontrol via CSS
+                paging: true,
+
+            });
+        </script>
         <script>
             function confirmDeletePay(id, nbr) {
                 Swal.fire({

@@ -6,7 +6,7 @@
             </a>
         </header>
         <div class="page-heading">
-            <h3>Sales Return</h3>
+            <h3>Form Retur Penjualan</h3>
             <p class="text-muted">Sales No: {{ $sm->sales_mstr_nbr }}</p>
         </div>
         <div class="page-content">

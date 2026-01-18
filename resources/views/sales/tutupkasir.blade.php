@@ -95,19 +95,19 @@
     <table class="item-table">
         <tr>
             <td>Bruto</td>
-            <td class="text-right">{{ number_format($data['bruto']) }}</td>
+            <td class="text-right">{{ rupiah($data['bruto']) }}</td>
         </tr>
         <tr>
             <td>Disc</td>
-            <td class="text-right">({{ number_format($data['diskon']) }})</td>
+            <td class="text-right">({{ rupiah($data['diskon']) }})</td>
         </tr>
         <tr>
             <td>PPN</td>
-            <td class="text-right">{{ number_format($data['ppn']) }}</td>
+            <td class="text-right">{{ rupiah($data['ppn']) }}</td>
         </tr>
         <tr class="fw-bold grand-total">
             <td>OMZET</td>
-            <td class="text-right">{{ number_format($data['omzet']) }}</td>
+            <td class="text-right">{{ rupiah($data['omzet']) }}</td>
         </tr>
     </table>
 
@@ -115,40 +115,36 @@
 
     <table class="item-table">
         <tr>
-            <td>Bayar</td>
-            <td class="text-right">{{ number_format($data['tunai'] + $data['kembalian']) }}</td>
+            <td>Modal awal</td>
+            <td class="text-right">{{ rupiah($activeSession->opening_amount) }}</td>
         </tr>
         <tr>
-            <td>Kembali</td>
-            <td class="text-right">{{ number_format($data['kembalian']) }}</td>
-        </tr>
-        <tr class="fw-bold">
-            <td>LACI (CASH)</td>
-            <td class="text-right">{{ number_format($data['tunai']) }}</td>
+            <td>Laci (Cash)</td>
+            <td class="text-right">{{ rupiah($data['cash']) }}</td>
         </tr>
         <tr>
-            <td>PIUTANG</td>
-            <td class="text-right">{{ number_format($data['piutang']) }}</td>
+            <td>QRIS</td>
+            <td class="text-right">{{ rupiah($data['qris']) }}</td>
+        </tr>
+        <tr>
+            <td>Transfer</td>
+            <td class="text-right">{{ rupiah($data['transfer']) }}</td>
+        </tr>
+        <tr>
+            <td>C/D Card</td>
+            <td class="text-right">{{ rupiah($data['creditcard']) }}</td>
         </tr>
     </table>
 
     <div class="divider"></div>
-    <div class="text-center fw-bold">RINCIAN TERJUAL</div>
-    <div class="divider"></div>
-
-    <table class="item-table">
-        @foreach ($data['rincian'] as $item)
-            <tr>
-                <td colspan="2" style="padding-top: 3px;">{{ $item->product_name }}</td>
-            </tr>
-            <tr>
-                <td>{{ number_format($item->total_qty) }}x</td>
-                <td class="text-right">{{ number_format($item->total_price) }}</td>
-            </tr>
-        @endforeach
+    <table>
+        <tr>
+            <td>Total Uang</td>
+            <td class="text-right">{{ rupiah($activeSession->opening_amount + $data['ttlTransactions']) }}</td>
+        </tr>
     </table>
-
     <div class="divider"></div>
+
 
     <div class="text-center footer">
         {{ now()->format('d/m/Y H:i:s') }}<br>

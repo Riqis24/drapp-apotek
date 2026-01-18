@@ -13,10 +13,8 @@
                 <div class="card-header">
                 </div>
                 <div class="card-body">
-                    <table id="ExpenseTable" class="table table-striped dt-responsive table-bordered table-sm nowrap"
-                        style="width:100%">
+                    <table id="PrTable" class="table table-striped dt-responsive table-bordered table-sm nowrap">
                         <thead class="table-dark">
-
                             <tr>
                                 <th style="text-align: center">No</th>
                                 <th style="text-align: center">PR#</th>
@@ -62,17 +60,12 @@
 
     @push('scripts')
         <script>
-            $(document).ready(function() {
-                $("#ExpenseTable").DataTable({
-                    responsive: true,
-                    autoWidth: true,
-                    // pageLength: 100,
-                    scrollY: "350px",
-                    lengthMenu: [
-                        [25, 20, 75, 100],
-                        [25, 20, 75, 100]
-                    ]
-                });
+            $("#PrTable").DataTable({
+                scrollX: true, // Wajib untuk tabel lebar seperti ini
+                scrollY: "350px",
+                scrollCollapse: true,
+                autoWidth: false, // MATIKAN agar kita bisa kontrol via CSS
+                paging: true,
             });
         </script>
         <script src="{{ 'assets/js/alert.js' }}"></script>

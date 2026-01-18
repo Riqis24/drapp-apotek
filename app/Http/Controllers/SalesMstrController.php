@@ -184,6 +184,7 @@ class SalesMstrController extends Controller
                                 'product'                => $product->name,
                                 'rak'                    => $p->placement->name ?? '-',
                                 'product_measurement_id' => $p->id,
+                                'conversion' => $p->conversion,
                                 'measurement_id'         => $p->measurement_id,
                                 'measurement'            => $p->measurement->name ?? '-',
                                 // Batch ini adalah batch pertama yang ditemukan di lokasi tersebut
@@ -424,6 +425,7 @@ class SalesMstrController extends Controller
                     'sales_mstr_subtotal' => $request->subtotal,
                     'sales_mstr_custid'  => $request->customer_id,
                     'sales_mstr_paymenttype'  => $request->payment_type,
+                    'sales_mstr_paymentmethod'  => $request->payment_method,
                     'sales_mstr_discamt'  => $request->disc_global,
                     'sales_mstr_paidamt'  => $request->paymentInput,
                     'sales_mstr_changeamt'  => $change,
@@ -449,6 +451,7 @@ class SalesMstrController extends Controller
                     'sales_mstr_subtotal' => $request->subtotal,
                     'sales_mstr_custid'  => $request->customer_id,
                     'sales_mstr_paymenttype'  => $request->payment_type,
+                    'sales_mstr_paymentmethod'  => $request->payment_method,
                     'sales_mstr_paidamt'  => $request->paymentInput ?? 0,
                     'sales_mstr_changeamt'  => $change ?? 0,
                     'sales_mstr_discamt'  => $request->disc_global,

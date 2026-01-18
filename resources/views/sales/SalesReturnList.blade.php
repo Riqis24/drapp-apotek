@@ -6,7 +6,7 @@
             </a>
         </header>
         <div class="page-heading">
-            <h3>Sales Return List</h3>
+            <h3>Retur Penjualan</h3>
         </div>
         <div class="page-content">
             <div class="card">
@@ -14,8 +14,7 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="custTable" class="table table-striped table-bordered table-sm nowrap"
-                            style="width:100%">
+                        <table id="SrTable" class="table table-striped table-bordered table-sm nowrap">
                             <thead class="table-dark">
                                 <tr>
                                     <th style="width:5%; text-align: center">No</th>
@@ -64,7 +63,16 @@
     </div>
 
     @push('scripts')
-        <script src="{{ 'assets/js/CustMstr/getData.js' }}"></script>
+        <script>
+            $("#SrTable").DataTable({
+                scrollX: true, // Wajib untuk tabel lebar seperti ini
+                scrollY: "350px",
+                scrollCollapse: true,
+                autoWidth: false, // MATIKAN agar kita bisa kontrol via CSS
+                paging: true,
+
+            });
+        </script>
         <script src="{{ 'assets/js/alert.js' }}"></script>
         <script>
             function confirmDeleteSr(id, srNumber) {

@@ -18,8 +18,7 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="ExpenseTable" class="table table-striped table-bordered table-sm nowrap"
-                            style="width:100%">
+                        <table id="ExpenseTable" class="table table-striped table-bordered table-sm nowrap">
                             <thead class="table-dark">
                                 <tr>
                                     <th style="width:5%; text-align: center">No</th>
@@ -132,7 +131,16 @@
     </form>
 
     @push('scripts')
-        <script src="{{ 'assets/js/ExpenseTr/getData.js' }}"></script>
+        <script>
+            $("#ExpenseTable").DataTable({
+                scrollX: true, // Wajib untuk tabel lebar seperti ini
+                scrollY: "350px",
+                scrollCollapse: true,
+                autoWidth: false, // MATIKAN agar kita bisa kontrol via CSS
+                paging: true,
+
+            });
+        </script>
         <script src="{{ 'assets/js/alert.js' }}"></script>
     @endpush
 </x-app-layout>
