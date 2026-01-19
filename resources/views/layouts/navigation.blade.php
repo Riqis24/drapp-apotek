@@ -99,6 +99,12 @@
                 <li class="submenu-item {{ Route::is('Stock.index') ? 'active' : '' }}">
                     <a href="{{ route('Stock.index') }}" class="submenu-link">Stok Obat</a>
                 </li>
+                <li class="submenu-item {{ Route::is('StockTransaction.StockCard') ? 'active' : '' }}">
+                    <a href="{{ route('StockTransaction.StockCard') }}" class="submenu-link">Kartu Stok</a>
+                </li>
+                <li class="submenu-item {{ Route::is('SummaryStockCard') ? 'active' : '' }}">
+                    <a href="{{ route('SummaryStockCard') }}" class="submenu-link">kartu Stok (Rekap)</a>
+                </li>
                 @role(['Super Admin', 'Admin', 'Owner'])
                     <li class="submenu-item {{ Route::is('FinancialRecord.*') ? 'active' : '' }}">
                         <a href="{{ route('FinancialRecord.index') }}" class="submenu-link">Catatan Keuangan</a>
