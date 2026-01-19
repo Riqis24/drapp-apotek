@@ -84,7 +84,7 @@
                 <span>Report</span>
             </a>
             <ul
-                class="submenu {{ Request::is('StockTransaction*', 'Stock/*', 'FinancialRecord*', 'ApMstr/SuppStatement*', 'ApMstr/Aging*') ? 'active' : '' }}">
+                class="submenu {{ Request::is('StockTransaction*', 'Stock/*', 'FinancialRecord*', 'ApMstr/SuppStatement*', 'ApMstr/Aging*', 'SummaryStockCard', 'StockTransaction.StockCard', 'StockTransaction.DetStockCard') ? 'active' : '' }}">
                 @role(['Super Admin', 'Admin', 'Owner'])
                     <li class="submenu-item {{ Route::is('ApMstr.SuppStatement') ? 'active' : '' }}">
                         <a href="{{ route('ApMstr.SuppStatement') }}" class="submenu-link">Lap. Rekening Pemasok</a>
