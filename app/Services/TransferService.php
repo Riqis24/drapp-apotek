@@ -60,7 +60,9 @@ class TransferService
                     'type'       => 'out',
                     'source_type' => TsMstr::class,
                     'source_id'  => $ts->ts_mstr_id,
-                    'date'       => now()
+                    'date'       => now(),
+                    'created_by' => auth()->user()->user_mstr_id,
+
                 ]);
 
                 // IN
@@ -72,7 +74,9 @@ class TransferService
                     'type'       => 'in',
                     'source_type' => TsMstr::class,
                     'source_id'  => $ts->ts_mstr_id,
-                    'date'       => now()
+                    'date'       => now(),
+                    'created_by' => auth()->user()->user_mstr_id,
+
                 ]);
             }
 

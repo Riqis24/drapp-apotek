@@ -262,6 +262,8 @@ class BpbMstrController extends Controller
                     'note'        => $bpbNbr,
                     'source_type' => BpbMstr::class,
                     'source_id'   => $bpb->bpb_mstr_id,
+                    'created_by' => auth()->user()->user_mstr_id,
+
                 ]);
 
                 /* ---------- STOCK SUMMARY ---------- */

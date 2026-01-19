@@ -37,4 +37,6 @@ class ProductMeasurements extends Model
     {
         return $this->belongsTo(ProductPlacement::class, 'placement_id');
     }
+
+    
 }

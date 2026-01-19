@@ -33,7 +33,6 @@ class SalesMstrController extends Controller
 {
     public function cashier()
     {
-
         $dueAps = ApMstr::with('supplier')
             ->where('ap_mstr_balance', '>', 0)
             ->whereDate('ap_mstr_duedate', '<=', now()->addDays(3))
@@ -111,12 +110,7 @@ class SalesMstrController extends Controller
 
         $items = $items->values();
 
-
-
         $items = collect($items)->values();
-
-
-
 
         // dd($prices);
         $session = CashierSession::where('user_id', auth()->user()->user_mstr_id)->where('status', 'open')->value('status');
@@ -142,6 +136,7 @@ class SalesMstrController extends Controller
         $productMeasurements = ProductMeasurements::with([
             'product.stocks.loc',
             'product.stocks.batch',
+            'product.bundleItems.bundle.stock',
             'measurement',
             'price',
             'placement',
@@ -211,7 +206,7 @@ class SalesMstrController extends Controller
                     'product'                => $product->name,
                     'product_measurement_id' => $p->id,
                     'measurement_id'         => $p->measurement_id,
-                    'measurement'            => $p->measurement->name ?? '-',
+                    'measurement'            => $p->measurement->name ?? 'bundle',
                 ]);
             }
         }
@@ -490,7 +485,9 @@ class SalesMstrController extends Controller
                     'data_source' => 'Penjualan',
                     'source_type' => SalesMstr::class,
                     'source_id'   => $sales->sales_mstr_id,
-                    'date'        => now()
+                    'date'        => now(),
+                    'created_by' => auth()->user()->user_mstr_id,
+
                 ]);
 
                 // ppn
@@ -501,7 +498,9 @@ class SalesMstrController extends Controller
                     'data_source' => 'PPN Penjualan',
                     'source_type' => SalesMstr::class,
                     'source_id'   => $sales->sales_mstr_id,
-                    'date'        => now()
+                    'date'        => now(),
+                    'created_by' => auth()->user()->user_mstr_id,
+
                 ]);
             }
 
@@ -834,7 +833,8 @@ class SalesMstrController extends Controller
                 'quantity'   => $take * -1,
                 'source_type' => SalesMstr::class,
                 'source_id'  => $sourceId,
-                'date'       => now()
+                'date'       => now(),
+                'created_by' => auth()->user()->user_mstr_id,
             ]);
 
             $usedBatches[] = [
@@ -936,7 +936,8 @@ class SalesMstrController extends Controller
                                 'source_type' => SalesMstr::class,
                                 'source_id'  => $id,
                                 'date'       => now(),
-                                'note'       => 'Void Sales: ' . $sales->sales_mstr_nbr
+                                'note'       => 'Void Sales: ' . $sales->sales_mstr_nbr,
+                                'created_by' => auth()->user()->user_mstr_id,
                             ]);
                         }
                     }

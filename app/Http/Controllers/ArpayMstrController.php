@@ -127,7 +127,9 @@ class ArpayMstrController extends Controller
                 'data_source' => 'Ar Payment',
                 'source_type' => ArpayMstr::class,
                 'source_id'   => $pay->arpay_mstr_id,
-                'date'        => now()
+                'date'        => now(),
+                'created_by' => auth()->user()->user_mstr_id,
+
             ]);
 
             // jurnal nanti:

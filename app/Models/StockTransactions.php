@@ -19,7 +19,8 @@ class StockTransactions extends Model
         'note',
         'date',
         'source_type',
-        'source_id'
+        'source_id',
+        'created_by',
     ];
 
     public function product()
@@ -41,4 +42,10 @@ class StockTransactions extends Model
     {
         return $this->morphTo();
     }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'created_by', 'user_mstr_id');
+    }
+    
 }

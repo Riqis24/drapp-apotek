@@ -26,23 +26,6 @@ class User extends Authenticatable
 
 
 
-    // public function getActivitylogOptions(): LogOptions
-    // {
-    //     return LogOptions::defaults()
-    //         ->useLogName('user_mstr')
-    //         ->setDescriptionForEvent(fn(string $eventName) => "You have {$eventName} user")
-    //         ->logOnly([
-    //             'user_mstr_name',
-    //             'user_mstr_email',
-    //             'user_mstr_nik',
-    //             'user_mstr_active',
-    //             'user_mstr_cb',
-    //             'user_mstr_image'
-    //         ])
-    //         ->dontSubmitEmptyLogs();
-    //     // Chain fluent methods for configuration options
-    // }
-
     /**
      * The attributes that are mass assignable.
      *

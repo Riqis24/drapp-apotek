@@ -155,6 +155,7 @@ class SaMstrController extends Controller
                     'date'        => $sa->sa_mstr_date,
                     'source_type' => SaMstr::class,
                     'source_id'   => $sa->sa_mstr_id,
+                    'created_by' => auth()->user()->user_mstr_id,
                 ]);
 
                 // =========================

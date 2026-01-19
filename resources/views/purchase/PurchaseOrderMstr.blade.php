@@ -19,8 +19,7 @@
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="PoTable" class="table table-striped table-bordered table-sm nowrap"
-                            style="width:100%">
+                        <table id="PoTable" class="table table-striped table-bordered table-sm nowrap">
                             <thead class="table-dark">
                                 <tr>
                                     <th style="text-align: center">No</th>

@@ -19,6 +19,7 @@ return new class extends Migration {
             $table->decimal('quantity', 18, 2);
             $table->text('note')->nullable();
             $table->date('date');
+            $table->unsignedBigInteger('created_by')->nullable();
             $table->timestamps();
         });
     }

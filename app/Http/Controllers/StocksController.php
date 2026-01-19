@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Request;
 use App\Http\Requests\StorestocksRequest;
 use App\Http\Requests\UpdatestocksRequest;
+use App\Models\Product;
 use Illuminate\Validation\ValidationException;
 
 class StocksController extends Controller

@@ -1640,25 +1640,23 @@
 
                 // console.log(item);
 
-                if (window.APP_CONFIG.allow_negative == 0) {
-                    // Cek setiap item di keranjang
-                    // Pastikan qty dan stock di-convert ke angka agar perbandingan valid
-                    const stock = parseFloat(item.stock) || 0;
-                    const conversion = parseFloat(item.conversion) || 0;
 
-                    if (conversion > stock) {
-                        // Hitung selisihnya dulu
-                        const kurangnya = conversion - stock;
+                const stock = parseFloat(item.stock) || 0;
+                // Gunakan qty dikali konversi satuan (jika ada)
+                const qtyBeli = (parseFloat(item.qty) || 0) * (parseFloat(item.conversion) || 1);
 
-                        swalError(
-                            "Stok Tidak Cukup",
-                            "Item berikut melebihi stok: " + (item.product || "Produk") +
-                            ". Stock tersisa " + stock +
-                            ". Kurang " + kurangnya // Menggunakan variabel yang sudah dihitung
-                        );
-                        return;
-                    }
-                };
+                if (qtyBeli > stock) {
+                    const kurangnya = qtyBeli - stock;
+                    swalError(
+                        "Stok Tidak Cukup",
+                        "Item berikut melebihi stok: " + (item.product || "Produk") +
+                        ". Stock tersisa " + stock +
+                        ". Kurang " + kurangnya
+                    );
+                    return;
+                }
+
+
 
                 // 3. Jika tidak ada, buat baris baru dari template
                 const tpl = document.getElementById('rowTemplate').content.cloneNode(true);

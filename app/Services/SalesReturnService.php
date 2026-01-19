@@ -97,7 +97,9 @@ class SalesReturnService
         'quantity'    => $qtyBase, // Gunakan nilai positif karena tipenya 'in'
         'source_type' => SrMstr::class,
         'source_id'   => $return->sr_mstr_id,
-        'date'        => now()
+        'date'        => now(),
+        'created_by' => auth()->user()->user_mstr_id,
+
       ]);
 
       Stocks::updateOrCreate(
@@ -204,7 +206,8 @@ class SalesReturnService
           'data_source' => 'Refund Return Penjualan (DPP)',
           'source_type' => SrMstr::class,
           'source_id'   => $return->sr_mstr_id,
-          'date'        => now()
+          'date'        => now(),
+          'created_by' => auth()->user()->user_mstr_id,
         ]);
 
         // B. Catat Pembatalan Hutang Pajak (PPN)
@@ -215,7 +218,8 @@ class SalesReturnService
             'data_source' => 'PPN Return Penjualan',
             'source_type' => SrMstr::class,
             'source_id'   => $return->sr_mstr_id,
-            'date'        => now()
+            'date'        => now(),
+            'created_by' => auth()->user()->user_mstr_id,
           ]);
         }
 
@@ -231,7 +235,8 @@ class SalesReturnService
           'data_source' => 'Refund Return Penjualan',
           'source_type' => SrMstr::class,
           'source_id'   => $return->sr_mstr_id,
-          'date'        => now()
+          'date'        => now(),
+          'created_by' => auth()->user()->user_mstr_id,
         ]);
 
         // C. Kurangi nilai 'paid' di Sales Master

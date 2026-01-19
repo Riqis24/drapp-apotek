@@ -87,6 +87,9 @@ Route::middleware('auth')->group(function () {
     Route::resource('ProductTransaction', ProductTransactionController::class);
 
     Route::resource('StockTransaction', StockTransactionController::class);
+    Route::get('SummaryStockCard', [StockTransactionController::class, 'SummaryStockCard'])->name('SummaryStockCard');
+    Route::get('StockCard', [StockTransactionController::class, 'StockCard'])->name('StockTransaction.StockCard');
+    Route::get('StockCard/{itemid}', [StockTransactionController::class, 'DetStockCard'])->name('StockTransaction.DetStockCard');
 
     Route::resource('ProductMeasurement', ProductMeasurementController::class);
 
@@ -100,6 +103,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('Stock', StocksController::class);
     Route::get('Stock/{transId}/history', [StocksController::class, 'stockHistory'])->name('stockHistory');
+
 
     Route::resource('ReceivablePayment', ReceivablePaymentController::class);
 

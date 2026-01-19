@@ -18,6 +18,7 @@ class FinancialRecords extends Model
         'amount',
         'source_type',
         'source_id',
+        'created_by',
     ];
 
     public function source()

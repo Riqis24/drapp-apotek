@@ -18,6 +18,7 @@ return new class extends Migration {
             $table->string('data_source');
             $table->text('description')->nullable();
             $table->decimal('amount', 18, 2);
+            $table->unsignedBigInteger('created_by')->nullable();
             // $table->decimal('ppn', 18, 2);
             // $table->decimal('grandtotal', 18, 2);
             $table->timestamps();

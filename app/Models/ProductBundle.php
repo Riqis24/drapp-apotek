@@ -25,4 +25,10 @@ class ProductBundle extends Model
     {
         return $this->belongsTo(Product::class, 'bundle_product_id');
     }
+
+    public function stocks()
+    {
+        return $this->hasMany(stocks::class, 'product_id', 'bundle_product_id');
+    }
+    
 }

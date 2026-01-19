@@ -77,6 +77,17 @@
                                                 \App\Models\TsMstr::class => $st->source?->ts_mstr_nbr,
                                                 default => '-',
                                             } ?? '-';
+
+                                        $route =
+                                            match ($st->source_type) {
+                                                \App\Models\SalesMstr::class => 'SalesMstr.show',
+                                                \App\Models\BpbMstr::class => 'BpbMstr.show',
+                                                \App\Models\SaMstr::class => 'SaMstr.show',
+                                                \App\Models\PrMstr::class => 'PrMstr.show',
+                                                \App\Models\SrMstr::class => 'SrMstr.show',
+                                                \App\Models\TsMstr::class => 'TsMstr.show',
+                                                default => '-',
+                                            } ?? '-';
                                     @endphp
                                     <tr>
                                         <td class="text-center">{{ $transactions->firstItem() + $index }}</td>
@@ -119,7 +130,8 @@
                                             @endif
                                         </td>
                                         <td class="text-center">
-                                            <span class="text-primary fw-bold">{{ $referenceNbr ?? '-' }}</span>
+                                            <span onclick="window.location.href='{{ route($route, $st->source_id) }}'"
+                                                class="text-primary fw-bold">{{ $referenceNbr ?? '-' }}</span>
                                         </td>
                                         <td class="small">{{ $formNote ?? '-' }}</td>
                                     </tr>

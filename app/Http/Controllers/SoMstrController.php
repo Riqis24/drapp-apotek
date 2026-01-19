@@ -210,6 +210,8 @@ class SoMstrController extends Controller
                             'source_id'   => $so->so_mstr_id,
                             'note'        => 'Void Stock Opname - Reversal of Adjustment (' . $so->so_mstr_nbr . ')',
                             'date'        => now(),
+                            'created_by' => auth()->user()->user_mstr_id,
+
                         ]);
                     }
 
@@ -305,6 +307,8 @@ class SoMstrController extends Controller
                     'source_type' => SaMstr::class,
                     'source_id'   => $sa->sa_mstr_id,
                     'date'        => now(),
+                    'created_by' => auth()->user()->user_mstr_id,
+
                 ]);
 
                 Stocks::updateOrCreate(

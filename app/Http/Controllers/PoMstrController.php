@@ -31,37 +31,19 @@ class PoMstrController extends Controller
     {
         $suppliers = SuppMstr::get();
 
-        // $products = Product::query()
-        //     ->select('products.*')
-        //     ->selectSub(function ($q) {
-        //         $q->from('stock_transactions')
-        //             ->selectRaw("
-        //       SUM(
-        //           CASE
-        //               WHEN type = 'in' THEN quantity
-        //               WHEN type = 'out' THEN -quantity
-        //               ELSE quantity
-        //           END
-        //       )
-        //   ")
-        //             ->whereColumn('stock_transactions.product_id', 'products.id');
-        //     }, 'stock')
-        //     ->get();
         $locId = auth()->user()->hasRole(['Super Admin', 'Owner']) ? null : 1; // Sesuaikan ambil Loc ID dari session/request
 
         $products = Product::query()
             ->with(['stocks' => function ($q) use ($locId) {
-                $q->where('quantity', '>', 0)
-                    ->orderBy('created_at', 'asc')
+                $q->orderBy('created_at', 'asc')
                     ->when($locId, function ($query) use ($locId) {
                         return $query->where('loc_id', $locId);
                     });
             }])
             ->whereHas('stocks', function ($q) use ($locId) {
-                $q->where('quantity', '>', 0)
-                    ->when($locId, function ($query) use ($locId) {
-                        return $query->where('loc_id', $locId);
-                    });
+                $q->when($locId, function ($query) use ($locId) {
+                    return $query->where('loc_id', $locId);
+                });
             })
             ->get();
 

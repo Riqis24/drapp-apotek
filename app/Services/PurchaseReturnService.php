@@ -99,6 +99,8 @@ class PurchaseReturnService
                 'date'        => now(),
                 'source_type' => PrMstr::class,
                 'source_id'   => $pr->pr_mstr_id,
+                'created_by' => auth()->user()->user_mstr_id,
+
             ]);
 
             $qtyBaseMinus = $qtyBase * -1;
@@ -229,6 +231,8 @@ class PurchaseReturnService
                 'date'        => now(),
                 'source_type' => PrMstr::class,
                 'source_id'   => $pr->pr_mstr_id,
+                'created_by' => auth()->user()->user_mstr_id,
+
             ]);
 
             $this->updateStock(

@@ -37,10 +37,6 @@ class Product extends Model
         return $this->belongsTo(stocks::class, 'id', 'product_id');
     }
 
-    // public function stocks()
-    // {
-    //     return $this->hasMany(stocks::class, 'product_id');
-    // }
     public function cat()
     {
         return $this->belongsTo(ProductCat::class, 'category', 'product_cat_id');
