@@ -34,7 +34,7 @@
                                     <th style="text-align: center">Remark</th>
                                     <th style="text-align: center">Payment</th>
                                     <th style="text-align: center">Jatuh Tempo</th>
-                                    <th style="text-align: center">Created By</th>
+                                    {{-- <th style="text-align: center">Created By</th> --}}
                                     <th style="text-align: center">Created At</th>
                                     <th style="text-align: center">Aksi</th>
                                 </tr>
@@ -43,7 +43,8 @@
                                 @foreach ($orders as $item)
                                     <tr>
                                         <td>{{ $loop->iteration }}</td>
-                                        <td>{{ $item->po_mstr_date }}</td>
+                                        {{-- <td>{{ $item->po_mstr_date }}</td> --}}
+                                        <td>{{ $item->po_mstr_createdat }}</td>
                                         <td>{{ $item->po_mstr_nbr }}</td>
                                         <td>{{ $item->supplier->supp_mstr_name }}</td>
                                         <td>{{ $item->po_mstr_eta }}</td>
@@ -55,7 +56,6 @@
                                         <td>{{ $item->po_mstr_duedate }}</td>
                                         <td>{{ $item->po_mstr_note }}</td>
                                         <td>{{ $item->user->user_mstr_name }}</td>
-                                        <td>{{ $item->po_mstr_createdat }}</td>
                                         <td>
                                             <button class="btn btn-sm btn-info" type="button"
                                                 onclick="window.open('{{ route('PurchaseOrder.show', $item->po_mstr_id) }}')">

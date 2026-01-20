@@ -25,15 +25,15 @@
                             </div>
                             <div class="col-md-12">
                                 <label for="supp_mstr_addr" class="form-label">Alamat</label>
-                                <textarea name="supp_mstr_addr" class="form-control mb-2" placeholder="Alamat"></textarea>
+                                <textarea name="supp_mstr_addr" class="form-control mb-2" placeholder="Alamat">{{ $supplier->supp_mstr_addr ?? '' }}</textarea>
                             </div>
                             <div class="col-md-12">
                                 <label for="supp_mstr_phone" class="form-label">No Telephone</label>
-                                <input name="supp_mstr_phone" class="form-control mb-2" placeholder="Telepon">
+                                <input name="supp_mstr_phone" class="form-control mb-2" placeholder="Telepon" value="{{ $supplier->supp_mstr_phone ?? '' }}">
                             </div>
                             <div class="col-md-12">
                                 <label for="supp_mstr_npwp" class="form-label">NPWP</label>
-                                <input name="supp_mstr_npwp" class="form-control mb-2" placeholder="NPWP">
+                                <input name="supp_mstr_npwp" class="form-control mb-2" placeholder="NPWP" value="{{ $supplier->supp_mstr_npwp ?? '' }}">
                             </div>
                             <div class="col-md-12">
                                 <label>

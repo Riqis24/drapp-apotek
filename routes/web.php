@@ -155,6 +155,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('SalesMstr', SalesMstrController::class);
     Route::get('/Cashier', [SalesMstrController::class, 'cashierv2'])->name('SalesMstr.cashier');
+    Route::get('/product/{productId}/measurements', [SalesMstrController::class, 'getUmProduct'])->name('SalesMstr.getUmProduct');
     Route::get('/CashierV2', [SalesMstrController::class, 'cashier'])->name('SalesMstr.cashierV2');
     Route::get('/sales/print/{id}', [SalesMstrController::class, 'print'])->name('SalesMstr.print');
     Route::get('/sales/hold/list', [SalesMstrController::class, 'listHold']);

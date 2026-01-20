@@ -72,9 +72,10 @@ class BpbMstrController extends Controller
     {
         return DB::table('bpb_det')
             ->join('bpb_mstr', 'bpb_det_mstrid', '=', 'bpb_mstr_id')
+            ->join('measurements', 'bpb_det_um', '=', 'id')
             ->join('supp_mstr', 'bpb_mstr_suppid', '=', 'supp_mstr_id')
             ->where('bpb_det_productid', $productId)
-            ->select('bpb_mstr_date as bpb_date', 'supp_mstr_name as supplier_name', 'bpb_det_qty as qty', 'bpb_det_price as price')
+            ->select('bpb_mstr_date as bpb_date', 'supp_mstr_name as supplier_name', 'bpb_det_qty as qty', 'bpb_det_price as price', 'name as um')
             ->orderBy('bpb_mstr_date', 'desc')
             ->limit(20)
             ->get();
@@ -211,43 +212,55 @@ class BpbMstrController extends Controller
              * 4. LOOP DETAIL BPB
              * ====================================================== */
             foreach ($request->items as $item) {
-
                 $qtyRcvd    = (float) $item['qty'];
                 $umConv     = (float) $item['umconv'];
                 $qtyBase    = $qtyRcvd * $umConv;
                 $price      = (float) $item['price'];
                 $priceBase  = $price / $umConv;
-                $lineTotal  = $qtyBase * $priceBase;
-                $discAmt   = 0;
-                $subtotal += $lineTotal;
+                $lineTotal  = $qtyRcvd * $price; // Total kotor per baris
 
-                /* ---------- BATCH (AMAN) ---------- */
+                /* ---------- LOGIKA DISKON BARU ---------- */
+                $discValue = (float) ($item['discvalue'] ?? 0);
+                $discType  = $item['disctype'] ?? 'amount';
+                $discTotal = 0;
+
+                if ($discType === 'percent') {
+                    // Jika persen, hitung dari total (Price * Qty)
+                    $discTotal = $lineTotal * ($discValue / 100);
+                } else {
+                    // Jika amount, langsung gunakan nilainya
+                    $discTotal = $discValue;
+                }
+
+                $totalPerLine = $lineTotal - $discTotal;
+                $subtotal += $totalPerLine; // Akumulasi ke Grand Total
+
+                /* ---------- BATCH ---------- */
                 $batch = BatchMstr::firstOrCreate(
                     [
                         'batch_mstr_productid'   => $item['productid'],
-                        'batch_mstr_no'          => $item['batch_no'],
+                        'batch_mstr_no'           => $item['batch_no'],
                         'batch_mstr_expireddate' => $item['expired_date'],
                     ]
                 );
-                $podet = PoDet::lockForUpdate()->findOrFail($item['po_det_id']);
-                $discAmt = $podet->po_det_discamt;
 
-                $total = ($price * $qtyRcvd) - $discAmt;
                 /* ---------- BPB DETAIL ---------- */
                 $bpbDet = BpbDet::create([
-                    'bpb_det_mstrid'   => $bpb->bpb_mstr_id,
-                    'bpb_det_podetid'  => $item['po_det_id'],
+                    'bpb_det_mstrid'    => $bpb->bpb_mstr_id,
+                    'bpb_det_podetid'   => $item['po_det_id'],
                     'bpb_det_productid' => $item['productid'],
-                    'bpb_det_qty'      => $qtyRcvd,
-                    'bpb_det_um'       => $item['umid'],
-                    'bpb_det_umconv'   => $umConv,
-                    'bpb_det_qtyrcvd'  => $qtyBase,
-                    'bpb_det_price'    => $price,
-                    'bpb_det_discamt'  => $discAmt,
-                    'bpb_det_total'    => $total,
+                    'bpb_det_qty'       => $qtyRcvd,
+                    'bpb_det_um'        => $item['umid'],
+                    'bpb_det_umconv'    => $umConv,
+                    'bpb_det_qtyrcvd'   => $qtyBase,
+                    'bpb_det_price'     => $price,
+                    'bpb_det_disctype'  => $discType,    // Simpan tipe: 'percent' atau 'amount'
+                    'bpb_det_discvalue'  => $discValue,
+                    'bpb_det_discamt'   => $discTotal,   // Simpan nilai nominal diskonnya
+                    'bpb_det_total'     => $totalPerLine,
                     'bpb_det_priceconv' => $priceBase,
-                    'bpb_det_batch'    => $batch->batch_mstr_id,
-                    'bpb_det_expired'  => $item['expired_date'],
+                    'bpb_det_batch'     => $batch->batch_mstr_id,
+                    'bpb_det_expired'   => $item['expired_date'],
                     'bpb_det_updateprice' => $item['updateprice'] ?? 0,
                 ]);
 
@@ -262,8 +275,7 @@ class BpbMstrController extends Controller
                     'note'        => $bpbNbr,
                     'source_type' => BpbMstr::class,
                     'source_id'   => $bpb->bpb_mstr_id,
-                    'created_by' => auth()->user()->user_mstr_id,
-
+                    'created_by'  => auth()->user()->user_mstr_id,
                 ]);
 
                 /* ---------- STOCK SUMMARY ---------- */
@@ -280,11 +292,13 @@ class BpbMstrController extends Controller
                 $poDet = PoDet::lockForUpdate()->findOrFail($item['po_det_id']);
 
                 if ($qtyRcvd > $poDet->po_det_qtyremain) {
-                    throw new \Exception('Qty diterima melebihi sisa PO');
+                    throw new \Exception("Qty diterima untuk produk {$item['productid']} melebihi sisa PO");
                 }
 
-                $poDet->increment('po_det_qtyrcvd', $qtyRcvd);
-                $poDet->decrement('po_det_qtyremain', $qtyRcvd);
+                $poDet->po_det_qtyrcvd = ($poDet->po_det_qtyrcvd ?? 0) + $qtyRcvd;
+                $poDet->po_det_qtyremain = ($poDet->po_det_qtyremain ?? 0) - $qtyRcvd;
+                $poDet->save();
+                // dd($poDet);
             }
 
             /* ======================================================

@@ -119,9 +119,38 @@ class ProductController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        //
+        try {
+            // 1. Cari produk yang akan diupdate
+            $product = Product::findOrFail($id);
+
+            ProductMeasurements::where('product_id', $id)->where('measurement_id', $product->measurement_id)->update([
+                'measurement_id' => $request->satuan,
+            ]);
+
+            // 2. Update data produk
+            $product->update([
+                'code'           => $request->code,
+                'name'           => $request->name,
+                'type'           => $request->type,
+                'category'       => $request->cat,
+                'margin'         => $request->margin,
+                'measurement_id' => $request->satuan,
+                'description'    => $request->description,
+                'is_stockable'   => isset($request->is_stockable) ? 1 : 0,
+                'is_visible'     => isset($request->is_visible) ? 1 : 0,
+            ]);
+
+            return redirect()->back()->with('success', 'Product berhasil diperbarui!');
+        } catch (ValidationException $e) {
+            return redirect()->back()
+                ->withErrors($e->validator)
+                ->withInput();
+        } catch (Exception $e) {
+            Log::error('Gagal memperbarui Product ID: ' . $id, ['error' => $e->getMessage()]);
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat memperbarui Product.');
+        }
     }
 
     /**

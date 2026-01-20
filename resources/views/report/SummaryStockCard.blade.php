@@ -15,11 +15,13 @@
                         <div class="row g-3">
                             <div class="col-md-3">
                                 <label class="small text-muted fw-bold">Dari Tanggal</label>
-                                <input type="date" name="from_date" class="form-control" value="{{ $fromDate }}">
+                                <input type="datetime-local" name="from_date" class="form-control"
+                                    value="{{ $fromDate }}">
                             </div>
                             <div class="col-md-3">
                                 <label class="small text-muted fw-bold">Sampai Tanggal</label>
-                                <input type="date" name="to_date" class="form-control" value="{{ $toDate }}">
+                                <input type="datetime-local" name="to_date" class="form-control"
+                                    value="{{ $toDate }}">
                             </div>
                             <div class="col-md-3">
                                 <label class="small text-muted fw-bold">Lokasi</label>

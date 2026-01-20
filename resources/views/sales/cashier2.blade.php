@@ -592,9 +592,9 @@
                                                         <tr>
                                                             <th>Produk</th>
                                                             <th width="80">Qty</th>
-                                                            <th width="120">Satuan</th>
+                                                            <th width="160">Satuan</th>
                                                             <th width="120">Harga</th>
-                                                            <th width="100">Diskon</th>
+                                                            <th width="140">Diskon</th>
                                                             <th width="120">Subtotal</th>
                                                             <th width="40"></th>
                                                         </tr>
@@ -735,9 +735,15 @@
                     min="1" step="any" style="max-width: 80px;">
             </td>
 
-            <td data-label="Satuan">
-                <input type="hidden" class="form-control form-control-sm measurement_id">
-                <span class="measurement fw-semibold text-muted"></span>
+            {{-- <td data-label="Satuan">
+                <select name="items[${rowIndex}][measurement_id]"
+                    class="form-select form-select-sm select-measurement" required>
+                    <option value="">-- Pilih Satuan --</option>
+                </select>
+                <input type="hidden" name="items[${rowIndex}][umconv]" class="umconv" value="1">
+            </td> --}}
+
+            <td class="unit-area" data-label="Satuan">
             </td>
 
             @role(['Super Admin', 'Owner'])
@@ -869,9 +875,18 @@
                         </div>
                         <div class="col-md-4">
                             <label class="form-label fw-bold">
-                                Jumlah Hasil (Bungkus/Kapsul)
+                                Jumlah Hasil
                             </label>
-                            <input type="number" id="jumlahHasil" class="form-control text-end" value="10">
+                            <div class="input-group">
+                                <input type="number" id="jumlahHasil" class="form-control text-end" value="10">
+
+                                <select name="umRacik" id="umRacik" class="form-select" style="max-width: 150px;">
+                                    <option value="">--satuan--</option>
+                                    @foreach ($ums as $um)
+                                        <option value="{{ $um->id }}">{{ $um->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -1349,25 +1364,25 @@
                     return;
                 }
 
-                if (window.APP_CONFIG.allow_negative == 0) {
-                    // Cek setiap item di keranjang
-                    // Pastikan qty dan stock di-convert ke angka agar perbandingan valid
-                    const stock = parseFloat(item.stock) || 0;
-                    const conversion = parseFloat(item.conversion) || 0;
+                // if (window.APP_CONFIG.allow_negative == 0) {
+                //     // Cek setiap item di keranjang
+                //     // Pastikan qty dan stock di-convert ke angka agar perbandingan valid
+                //     const stock = parseFloat(item.stock) || 0;
+                //     const conversion = parseFloat(item.conversion) || 0;
 
-                    if (conversion > stock) {
-                        // Hitung selisihnya dulu
-                        const kurangnya = conversion - stock;
+                //     if (conversion > stock) {
+                //         // Hitung selisihnya dulu
+                //         const kurangnya = conversion - stock;
 
-                        swalError(
-                            "Stok Tidak Cukup",
-                            "Item berikut melebihi stok: " + (item.product || "Produk") +
-                            ". Stock tersisa " + stock +
-                            ". Kurang " + kurangnya // Menggunakan variabel yang sudah dihitung
-                        );
-                        return;
-                    }
-                };
+                //         swalError(
+                //             "Stok Tidak Cukup",
+                //             "Item berikut melebihi stok: " + (item.product || "Produk") +
+                //             ". Stock tersisa " + stock +
+                //             ". Kurang " + kurangnya // Menggunakan variabel yang sudah dihitung
+                //         );
+                //         return;
+                //     }
+                // };
 
                 const row = `
         <tr id="${rowId}" data-product-id="${item.product_id}">
@@ -1548,6 +1563,7 @@
                 racikanDetails[racikId] = {
                     nama: $('#namaRacikan').val(),
                     jumlah_bungkus: parseInt($('#jumlahHasil').val()),
+                    // measurement: parseInt($('#umRacik').val()),
                     jasa: parseInt($('#jasaRacik').val()),
                     markup: parseInt($('#markupTambahan').val()),
                     total: parseInt($('#hargaJualTotal').text().replace(/[^\d]/g, '')),
@@ -1562,6 +1578,15 @@
             function convertRacikanToItem() {
 
                 const nama = $('#namaRacikan').val() || 'Obat Racikan';
+                // const um = $('#umracikan').val();
+                // Ambil element select-nya
+                let selectUm = $('#umRacik');
+
+                // Ambil ID (Value)
+                let umId = selectUm.val();
+
+                // Ambil Nama (Teks yang muncul di layar)
+                let umName = selectUm.find('option:selected').text();
                 const qty = parseInt($('#jumlahHasil').val()) || 1;
                 const hargaPerBungkus = parseInt(
                     $('#hargaPerBungkus').text().replace(/[^\d]/g, '')
@@ -1573,8 +1598,8 @@
 
                     product: nama,
                     product_id: 0, // atau ID khusus racikan
-                    measurement_id: 0,
-                    measurement: 'Bungkus',
+                    measurement_id: umId,
+                    measurement: umName,
 
                     price: hargaPerBungkus,
                     qty: qty,
@@ -1623,6 +1648,7 @@
         </script>
         <script>
             function addItem(item) {
+
                 // 1. Definisikan rowId unik (Produk + Satuan + Harga)
                 let rowId = `${item.product_id}-${item.measurement_id}-${item.price}`;
 
@@ -1645,27 +1671,32 @@
                 // Gunakan qty dikali konversi satuan (jika ada)
                 const qtyBeli = (parseFloat(item.qty) || 0) * (parseFloat(item.conversion) || 1);
 
-                if (qtyBeli > stock) {
-                    const kurangnya = qtyBeli - stock;
-                    swalError(
-                        "Stok Tidak Cukup",
-                        "Item berikut melebihi stok: " + (item.product || "Produk") +
-                        ". Stock tersisa " + stock +
-                        ". Kurang " + kurangnya
-                    );
-                    return;
+                if (item.type !== 'racikan') {
+                    if (qtyBeli > stock) {
+                        const kurangnya = qtyBeli - stock;
+                        swalError(
+                            "Stok Tidak Cukup",
+                            "Item berikut melebihi stok: " + (item.product || "Produk") +
+                            ". Stock tersisa " + stock +
+                            ". Kurang " + kurangnya
+                        );
+                        return;
+                    }
                 }
 
-
+                console.log('masuk additem atas sendiri');
 
                 // 3. Jika tidak ada, buat baris baru dari template
                 const tpl = document.getElementById('rowTemplate').content.cloneNode(true);
                 const tr = tpl.querySelector('tr');
+                const unitArea = tr.querySelector('.unit-area');
 
                 // --- PENTING: Tambahkan data-rowid agar bisa dideteksi nantinya ---
                 tr.setAttribute('data-rowid', rowId);
                 // -----------------------------------------------------------------
-
+                const idUnik = item.prescode || item.id_unik; // Ambil dari data resume
+                tr.setAttribute('data-idunik', idUnik);
+                
                 tr.dataset.priceid = item.id || item.prescode;
                 tr.dataset.type = item.type;
 
@@ -1676,18 +1707,116 @@
         </div>
     `;
 
+                if (item.type === 'racikan') {
+                    // JIKA RACIKAN: Tampilkan Badge (Teks saja)
+                    unitArea.innerHTML = `
+            <input type="text" readonly name="items[${rowId}][measurement_id]" class="form-control form-control-sm " value="${item.measurement}">
+            <input type="hidden" name="items[${rowId}][measurement_id]" class="measurement_id" value="${item.measurement_id}">
+        `;
+                } else {
+                    console.log('masuk additem');
+
+                    // JIKA REGULER: Tampilkan Select
+                    unitArea.innerHTML = `
+            <select name="items[${rowId}][measurement_id]" 
+                    class="form-select form-select-sm select-measurement" required>
+                <option value="">-- Pilih --</option>
+            </select>
+            <input type="hidden" name="items[${rowId}][umconv]" class="umconv" value="1">
+        `;
+
+                    // Panggil fungsi AJAX untuk isi option select-nya
+                    const selectUM = unitArea.querySelector('.select-measurement');
+                    fillMeasurementSelect(item.product_id, selectUM, item.measurement_id);
+                }
+
                 tr.querySelector('.qty').value = qtyToAdd;
                 tr.querySelector('.price').value = item.price;
                 tr.querySelector('.product_id').value = item.product_id;
-                tr.querySelector('.measurement_id').value = item.measurement_id;
+                // tr.querySelector('.measurement_id').value = item.measurement_id;
                 tr.querySelector('.disc-item').value = item.disc || 0;
-                tr.querySelector('.measurement').innerText = item.measurement;
+                // tr.querySelector('.measurement').innerText = item.measurement;
 
                 cartBody.appendChild(tr);
                 recalc();
             }
         </script>
         <script>
+            $(document).on('change', '.select-measurement', function() {
+                let row = $(this).closest('tr'); // Ini adalah objek jQuery
+                let selectedOption = $(this).find(':selected');
+
+                let newPrice = parseFloat(selectedOption.data('price')) || 0;
+                let conversion = parseFloat(selectedOption.data('conv')) || 1;
+
+                // Gunakan .find() daripada .querySelector()
+                row.find('.price').val(newPrice);
+                row.find('.umconv').val(conversion);
+
+                recalc();
+            });
+
+            // 1. Variabel Global untuk menyimpan data agar tidak load ulang terus menerus
+            let measurementCache = {};
+
+            function fillMeasurementSelect(productId, element, selectedId = null) {
+                const $el = $(element);
+                console.log('masuk umselect');
+                // Jika data sudah ada di cache, langsung pakai (Tanpa delay AJAX)
+                if (measurementCache[productId]) {
+                    renderOptions($el, measurementCache[productId], selectedId);
+                    return;
+                }
+
+                // Jika belum ada, baru panggil AJAX
+                $.ajax({
+                    url: `/product/${productId}/measurements`,
+                    method: 'GET',
+                    success: function(response) {
+                        // Simpan ke cache
+                        measurementCache[productId] = response;
+                        renderOptions($el, response, selectedId);
+                    }
+                });
+            }
+
+            function renderOptions($el, data, selectedId) {
+                let options = '';
+                data.forEach(um => {
+                    let selected = (selectedId == um.measurement_id) ? 'selected' : '';
+                    // Simpan harga dasar atau harga per satuan di data attribute
+                    options += `<option value="${um.measurement_id}" 
+                            data-conv="${um.umconv}" 
+                            data-price="${um.price}" 
+                            ${selected}>
+                        ${um.measurement_name}
+                    </option>`;
+                });
+                $el.html(options);
+
+                // Langsung update harga pertama kali load
+                updatePriceByUnit($el);
+            }
+
+            // 2. Fungsi Otomatis Update Harga saat Satuan Diganti
+            $(document).on('change', '.select-measurement', function() {
+                updatePriceByUnit($(this));
+            });
+
+            function updatePriceByUnit($selectEl) {
+                let row = $selectEl.closest('tr');
+                let selectedOption = $selectEl.find(':selected');
+
+                // Ambil harga dari atribut data-price yang kita kirim dari server
+                let price = parseFloat(selectedOption.data('price')) || 0;
+
+                // Update input harga di baris tersebut
+                row.find('.price').val(price);
+
+                // Jalankan kalkulasi total
+                recalc();
+            }
+
             function recalc() {
                 let subtotal = 0;
 
@@ -1908,10 +2037,12 @@
 
                 let items = [];
                 cartBody.querySelectorAll('tr').forEach(tr => {
+                    const measurementEl = tr.querySelector('.measurement_id') || tr.querySelector(
+                        '.select-measurement');
                     items.push({
                         price_id: tr.dataset.priceid,
                         product_id: tr.querySelector('.product_id').value,
-                        measurement_id: tr.querySelector('.measurement_id').value,
+                        measurement_id: measurementEl ? measurementEl.value : null,
                         qty: tr.querySelector('.qty').value,
                         price: tr.querySelector('.price').value,
                         disc: tr.querySelector('.disc-item').value
@@ -1948,8 +2079,16 @@
                         clearCart();
 
                         // 3. Masukkan item baru
+                        if (data.racikanDetails) {
+                            // Jangan pakai 'let' atau 'const' agar mengisi variabel global yang sudah ada
+                            racikanDetails = data.racikanDetails;
+                            console.log("Memori racikan dipulihkan:", racikanDetails);
+                        }
+
                         if (data.items && data.items.length > 0) {
-                            data.items.forEach(item => addItem(item));
+                            data.items.forEach(item => {
+                                addItem(item); // addItem akan membaca item.id_unik
+                            });
                         }
 
                         // 4. Set Header Data
@@ -2233,18 +2372,26 @@
 
                         const items = [];
                         cartBody.querySelectorAll('tr').forEach(tr => {
+                            // Cari elemen measurement, coba ambil class .measurement_id dulu (untuk racikan)
+                            // jika tidak ada, ambil dari .select-measurement (untuk reguler)
+                            const measurementEl = tr.querySelector('.measurement_id') || tr.querySelector(
+                                '.select-measurement');
+
                             items.push({
                                 price_id: tr.dataset.priceid,
                                 type: tr.dataset.type,
-                                product_id: tr.querySelector('.product_id').value,
-                                measurement_id: tr.querySelector('.measurement_id').value,
-                                qty: tr.querySelector('.qty').value,
-                                price: tr.querySelector('.price').value,
-                                disc: tr.querySelector('.disc-item').value
+                                product_id: tr.querySelector('.product_id')
+                                    ?.value, // Gunakan ?. untuk keamanan
+                                measurement_id: measurementEl ? measurementEl.value :
+                                null, // Ambil value dengan aman
+                                qty: tr.querySelector('.qty')?.value || 0,
+                                price: tr.querySelector('.price')?.value || 0,
+                                disc: tr.querySelector('.disc-item')?.value || 0
                             });
                         });
 
                         const details = (typeof racikanDetails !== 'undefined') ? racikanDetails : null;
+                        console.log(details);
                         // Di dalam event listener submit
                         if (window.APP_CONFIG.allow_negative == 0) {
                             let itemsBermasalah = [];

@@ -56,7 +56,7 @@ class SuppMstrController extends Controller
     public function edit($id)
     {
         $supplier = SuppMstr::findOrFail($id);
-        return view('supplier.edit', compact('supplier'));
+        return view('master.SuppMstrForm', compact('supplier'));
     }
 
     public function update(Request $request, $id)
@@ -65,7 +65,7 @@ class SuppMstrController extends Controller
 
         $supplier->update($request->all());
 
-        return redirect()->route('supplier.index')->with('success', 'Supplier updated');
+        return redirect()->route('SupplierMstr.index')->with('success', 'Supplier updated');
     }
 
     public function destroy($id)

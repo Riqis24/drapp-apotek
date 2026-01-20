@@ -33,18 +33,13 @@ class PoMstrController extends Controller
 
         $locId = auth()->user()->hasRole(['Super Admin', 'Owner']) ? null : 1; // Sesuaikan ambil Loc ID dari session/request
 
-        $products = Product::query()
+        $products = Product::where('type', 'single')
             ->with(['stocks' => function ($q) use ($locId) {
                 $q->orderBy('created_at', 'asc')
                     ->when($locId, function ($query) use ($locId) {
                         return $query->where('loc_id', $locId);
                     });
             }])
-            ->whereHas('stocks', function ($q) use ($locId) {
-                $q->when($locId, function ($query) use ($locId) {
-                    return $query->where('loc_id', $locId);
-                });
-            })
             ->get();
 
         // dd($products);

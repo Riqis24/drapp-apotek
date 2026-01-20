@@ -118,13 +118,13 @@ class StockTransactionController extends Controller
 
             // A. Hitung Saldo Awal (Mutasi sebelum $fromDate)
             $saldoAwalIn = StockTransactions::where('product_id', $product->id)
-                ->where('created_at', '<', $fromDate . ' 00:00:00')
+                ->where('created_at', '<', $fromDate)
                 ->when($locId, fn($q) => $q->where('loc_id', $locId))
                 ->where('type', 'in')
                 ->sum('quantity');
 
             $saldoAwalOut = StockTransactions::where('product_id', $product->id)
-                ->where('created_at', '<', $fromDate . ' 00:00:00')
+                ->where('created_at', '<', $fromDate)
                 ->when($locId, fn($q) => $q->where('loc_id', $locId))
                 ->where('type', 'out')
                 ->sum('quantity');
@@ -133,14 +133,14 @@ class StockTransactionController extends Controller
 
             // B. Hitung Mutasi MASUK dalam periode
             $masuk = StockTransactions::where('product_id', $product->id)
-                ->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59'])
+                ->whereBetween('created_at', [$fromDate, $toDate])
                 ->when($locId, fn($q) => $q->where('loc_id', $locId))
                 ->where('type', 'in')
                 ->sum('quantity');
 
             // C. Hitung Mutasi KELUAR dalam periode
             $keluar = StockTransactions::where('product_id', $product->id)
-                ->whereBetween('created_at', [$fromDate . ' 00:00:00', $toDate . ' 23:59:59'])
+                ->whereBetween('created_at', [$fromDate, $toDate])
                 ->when($locId, fn($q) => $q->where('loc_id', $locId))
                 ->where('type', 'out')
                 ->sum('quantity');

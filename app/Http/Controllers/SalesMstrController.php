@@ -9,6 +9,7 @@ use App\Models\ArMstr;
 use App\Models\SrMstr;
 use App\Models\stocks;
 use App\Models\LocMstr;
+use App\Models\PresDet;
 use App\Models\Product;
 use App\Models\ArpayDet;
 use App\Models\Customer;
@@ -17,6 +18,7 @@ use App\Models\SalesDet;
 use App\Models\ArpayMstr;
 use App\Models\SalesMstr;
 use App\Helpers\AppSetting;
+use App\Models\Measurement;
 use App\Models\StoreProfile;
 use Illuminate\Http\Request;
 use App\Models\ProductBundle;
@@ -26,6 +28,7 @@ use App\Models\ProductPlacement;
 use App\Models\StockTransactions;
 use Illuminate\Support\Facades\DB;
 use App\Models\ProductMeasurements;
+use Illuminate\Support\Facades\Log;
 use App\Http\Requests\StoreSalesMstrRequest;
 use App\Http\Requests\UpdateSalesMstrRequest;
 
@@ -232,10 +235,11 @@ class SalesMstrController extends Controller
             $customers = Customer::get();
         }
 
+        $ums = Measurement::all();
 
 
         // dd($locations);
-        return view('sales.cashier2', compact('locations', 'items', 'holds', 'dueAps', 'customers', 'session'));
+        return view('sales.cashier2', compact('locations', 'items', 'holds', 'dueAps', 'customers', 'session', 'ums'));
     }
 
     public function getHistoryRacik(Request $request)
@@ -301,23 +305,55 @@ class SalesMstrController extends Controller
     {
         $hold = SalesMstr::with(['details.product', 'details.measurement'])->findOrFail($id);
         // dd($hold);
+        $racikanDetails = [];
 
-        $items = $hold->details->map(function ($det) use ($hold) {
+        $items = $hold->details->map(function ($det) use ($hold, &$racikanDetails) {
+            $um = Measurement::find($det->sales_det_um);
+
+            // JIKA RACIKAN
             if (!empty($det->sales_det_pmid)) {
-                $pres = PresMstr::with('details')->find($det->sales_det_pmid);
+                $pres = PresMstr::with('details.product', 'details.measurement')->find($det->sales_det_pmid);
+                if ($pres) {
+
+                    // Coba ambil detail secara manual jika relasi bermasalah
+                    $bahanRacikan = PresDet::with(['product', 'measurement'])
+                        ->where('pres_det_mstrid', $pres->pres_mstr_id) // Sesuaikan nama kolom ID-nya
+                        ->get();
+
+                    if ($bahanRacikan->isNotEmpty()) {
+                        dd('masuk 23');
+
+                        $idUnik = $det->sales_det_prescode;
+                        // dd($idUnik);
+                        $racikanDetails[$idUnik] = $bahanRacikan->map(function ($d) {
+                            return [
+                                'product_id'       => $d->pres_det_productid,
+                                'product_name'     => $d->product->name ?? 'N/A',
+                                'qty'              => (float)$d->pres_det_qty,
+                                'measurement_id'   => $d->pres_det_um,
+                                'measurement_name' => $d->measurement->name ?? '-',
+                            ];
+                        })->toArray();
+                    } else {
+                        // Log jika ternyata memang kosong di DB
+                        Log::warning("Bahan racikan kosong di database untuk Master ID: " . $pres->pres_mstr_id);
+                        $racikanDetails[$det->sales_det_prescode] = [];
+                    }
+                }
+
                 return [
-                    'prescode'      => $det->sales_det_prescode,
-                    'product_id'    => 0,
-                    'measurement_id' => 0,
-                    'qty'           => $det->sales_det_qty,
-                    'price'         => $det->sales_det_price,
-                    'disc'          => $det->sales_det_discamt,
-                    'product'       => $pres->pres_mstr_name,
-                    'measurement'   => 'Bungkus',
-                    'rak'           => 'resep',
-                    'type'          => 'racikan',
-                    'batch_number'  => 'Resep' ?? '-',
-                    'batch_exp'     =>  '-',
+                    'prescode'       => $det->sales_det_prescode,
+                    'product_id'     => 0,
+                    'measurement_id' => $det->sales_det_um,
+                    'qty'            => $det->sales_det_qty,
+                    'price'          => (float)$det->sales_det_price,
+                    'disc'           => $det->sales_det_discamt,
+                    'product'        => $pres->pres_mstr_name,
+                    'measurement'    => $um->name ?? '-',
+                    'type'           => 'racikan',
+                    'batch_number'   => 'Resep',
+                    'batch_exp'      => '-',
+                    'id_unik'        => $idUnik // Tambahkan ini untuk JS
                 ];
             } else {
                 $pm = ProductMeasurements::where('product_id', $det->sales_det_productid)
@@ -337,13 +373,15 @@ class SalesMstrController extends Controller
                     'product'        => $det->product->name, // Sesuaikan dengan yang dipanggil formatObat
                     'measurement'    => $det->measurement->name,
                     'measurement_id' => $det->sales_det_um,
+                    'conversion'     => $pm->conversion,
+                    'stock'          => $stock->quantity,
                     'qty'            => $det->sales_det_qty,
                     'price'          => (float)$det->sales_det_price,
                     'disc'           => $det->sales_det_discamt,
                     'batch_number'   => $stock->batch->batch_mstr_no ?? '-',
                     'batch_exp'      => $stock->batch->batch_mstr_expireddate ?? '-',
                     'rak'            => $placement ? $placement->name : '-',
-                    'type'           => 'regular',
+                    'type'           => $det->sales_det_type,
                 ];
             }
         });
@@ -358,7 +396,8 @@ class SalesMstrController extends Controller
             'sales_mstr_id' => $hold->sales_mstr_id,
             'sales_mstr_discamt' => $hold->sales_mstr_discamt,
             'ppn_type' => $ppn,
-            'items' => $items
+            'items' => $items,
+            'racikanDetails' => $racikanDetails
         ]);
     }
 
@@ -548,6 +587,29 @@ class SalesMstrController extends Controller
         // return redirect()->route('SalesMstr.index')->with('success', 'Transaction Created Successfully!');
     }
 
+    public function getUmProduct($productId)
+    {
+        try {
+            // Eager load relasi 'measurement' untuk mendapatkan nama satuan
+            $data = ProductMeasurements::with(['measurement', 'price'])
+                ->where('product_id', $productId)
+                ->get();
+
+            $result = $data->map(function ($item) {
+                return [
+                    'measurement_id'   => $item->measurement_id,
+                    'measurement_name' => $item->measurement->name ?? 'N/A',
+                    'price'            => $item->price->price ?? 0,
+                    'umconv'           => (float) $item->conversion, // Nilai konversi (misal: Box ke Pcs = 100)
+                ];
+            });
+
+            return response()->json($result);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+
     public function print($id)
     {
         $apotek = StoreProfile::first();
@@ -727,7 +789,7 @@ class SalesMstrController extends Controller
             ]
         );
 
-        // dd($prescription);
+        // dd($dataRacik['details']);
 
 
         // 2. LOOP BAHAN BAKU
@@ -753,6 +815,7 @@ class SalesMstrController extends Controller
                 // Simpan Detail Resep (Bisa banyak baris jika pecah batch)
                 foreach ($appliedBatches as $ab) {
                     $prescription->details()->create([
+                        'pres_det_mstrid' => $prescription->pres_mstr_id,
                         'pres_det_productid' => $bahan['product_id'],
                         'pres_det_um'        => $bahan['measurement_id'],
                         'pres_det_batchid'   => $ab['batch_id'],

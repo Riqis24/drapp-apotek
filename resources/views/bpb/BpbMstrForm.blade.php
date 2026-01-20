@@ -20,7 +20,8 @@
                             <select name="poId" class="form-control select2" id="poSelect" required>
                                 <option value="">-- Pilih PO --</option>
                                 @foreach ($pos as $po)
-                                    <option value="{{ $po->po_mstr_id }}">{{ $po->po_mstr_nbr }}</option>
+                                    <option value="{{ $po->po_mstr_id }}">
+                                        {{ $po->po_mstr_nbr . ' [' . $po->supplier->supp_mstr_name . ']' }}</option>
                                 @endforeach
                             </select>
                         </div>
@@ -109,12 +110,12 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Produk</th>
-                                        <th style="width: 8%">UM</th>
-                                        <th style="width: 12%">Qty</th>
+                                        <th style="width: 6%">UM</th>
+                                        <th style="width: 8%">Qty</th>
                                         <th style="width: 12%">Harga</th>
-                                        <th style="width: 12%">Disc</th>
+                                        <th style="width: 16%">Disc</th>
                                         <th style="width: 16%">Batch</th>
-                                        <th style="width: 6%">Expired</th>
+                                        <th style="width: 12%">Sub Total</th>
                                         <th style="width: 5%">Update Price</th>
                                         <th style="width: 5%"></th>
                                     </tr>
@@ -408,7 +409,7 @@
         </td>
 
         <td data-label="Qty Terima">
-            <input type="number" name="items[${rowIndex}][qty]" class="form-control" 
+            <input type="number" name="items[${rowIndex}][qty]" class="form-control bpb-qty-input" 
                    value="${item.po_det_qtyremain}" max="${item.po_det_qtyremain}">
             <small class="text-muted text-xs">Sisa PO: ${item.po_det_qtyremain}</small>
         </td>
@@ -421,20 +422,25 @@
             </div>
         </td>
 
-        <td data-label="Disc Amt">
-            <div class="d-flex align-items-center">
-                <input type="number" name="items[${rowIndex}][discamt]" class="form-control bg-light bpb-discamt-input" 
-                       value="${item.po_det_discamt}">
+        <td data-label="Diskon">
+            <div class="input-group">
+                <select name="items[${rowIndex}][disctype]" class="form-select bpb-disctype-input" width="15px">
+                    <option value="amount">Rp</option>
+                    <option value="percent">%</option>
+                </select>
+                <input type="number" name="items[${rowIndex}][discvalue]" class="form-control bpb-discvalue-input" 
+                       value="${item.po_det_discvalue || 0}">
             </div>
         </td>
 
-        <td data-label="No. Batch">
-            <input type="text" name="items[${rowIndex}][batch_no]" class="form-control" 
+        <td data-label="Batch & Exp">
+            <input type="text" name="items[${rowIndex}][batch_no]" class="form-control mb-1" 
                    placeholder="No. Batch" required>
+            <input type="date" name="items[${rowIndex}][expired_date]" class="form-control" required>
         </td>
 
-        <td data-label="Tgl Expired">
-            <input type="date" name="items[${rowIndex}][expired_date]" class="form-control" required>
+        <td data-label="Subtotal">
+            <input type="text" class="form-control bg-light bpb-subtotal-display" readonly value="0">
         </td>
 
         <td data-label="Update Price" class="text-md-center">
@@ -448,19 +454,48 @@
                 <label class="d-md-none">Update Harga Jual?</label>
             </div>
         </td>
-    </td>
-    
-    <td>
-        <button type="button" class="btn btn-danger btn-sm removeRow w-100">
-            <i class="bi bi-trash"></i> <span class="d-md-none">Hapus Barang</span>
-        </button>
-    </td>
-</tr>`;
+        
+        <td>
+            <button type="button" class="btn btn-danger btn-sm removeRow w-100">
+                <i class="bi bi-trash"></i> <span class="d-md-none">Hapus Barang</span>
+            </button>
+        </td>
+    </tr>`;
 
                         $('#bpbTable tbody').append(row);
                         rowIndex++;
                     });
                 });
+            });
+
+            function calculateLineTotals() {
+                document.querySelectorAll('.bpb-line').forEach(row => {
+                    let qty = parseFloat(row.querySelector('.bpb-qty-input')?.value) || 0;
+                    let price = parseFloat(row.querySelector('.bpb-price-input')?.value) || 0;
+                    let discValue = parseFloat(row.querySelector('.bpb-discvalue-input')?.value) || 0;
+                    let discType = row.querySelector('.bpb-disctype-input')?.value || 'amount';
+
+                    let lineTotal = qty * price;
+                    let discountCalculated = 0;
+
+                    if (discType === 'percent') {
+                        discountCalculated = lineTotal * (discValue / 100);
+                    } else {
+                        discountCalculated = discValue;
+                    }
+
+                    let subtotal = lineTotal - discountCalculated;
+
+                    // Tampilkan ke input read-only dengan format ribuan
+                    row.querySelector('.bpb-subtotal-display').value = new Intl.NumberFormat('id-ID').format(subtotal);
+                });
+            }
+
+            // Tambahkan event listener untuk update otomatis
+            document.addEventListener('input', function(e) {
+                if (e.target.matches('.bpb-qty-input, .bpb-price-input, .bpb-discvalue-input, .bpb-disctype-input')) {
+                    calculateLineTotals();
+                }
             });
         </script>
         <script>

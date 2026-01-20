@@ -273,8 +273,13 @@
     </td>
 
     <td data-label="Diskon per Item">
-        <input type="number" name="items[${rowIndex}][discvalue]" class="form-control disc" value="0">
-        <input type="hidden" name="items[${rowIndex}][disctype]" value="amount">
+        <div class="input-group">
+            <select name="items[${rowIndex}][disctype]" class="form-select disctype" style="width: 40%;">
+                <option value="amount">Rp</option>
+                <option value="percent">%</option>
+            </select>
+            <input type="number" name="items[${rowIndex}][discvalue]" class="form-control disc" value="0" style="width: 60%;">
+        </div>
     </td>
 
     <td data-label="Subtotal">
@@ -302,14 +307,33 @@
                 $(this).closest('tr').remove();
             });
 
-            $(document).on('input', '.qty, .price, .disc', function() {
+            $(document).on('input change', '.qty, .price, .disc, .disctype', function() {
                 let row = $(this).closest('tr');
+
+                // Ambil nilai input
                 let qty = parseFloat(row.find('.qty').val()) || 0;
                 let price = parseFloat(row.find('.price').val()) || 0;
-                let disc = parseFloat(row.find('.disc').val()) || 0;
+                let discValue = parseFloat(row.find('.disc').val()) || 0;
+                let discType = row.find('.disctype').val() || 'amount'; // Tambahkan ini
 
-                let total = (qty * price) - disc;
-                row.find('.total').val(total);
+                let lineTotal = qty * price;
+                let discCalculated = 0;
+
+                // Logika Hitung Diskon
+                if (discType === 'percent') {
+                    discCalculated = lineTotal * (discValue / 100);
+                } else {
+                    discCalculated = discValue;
+                }
+
+                let finalTotal = lineTotal - discCalculated;
+
+                // Set nilai ke input total di baris tersebut
+                // Gunakan .toFixed(2) jika ingin mendukung angka desimal/pecahan
+                row.find('.total').val(finalTotal);
+
+                // Panggil fungsi hitung grand total (opsional jika ada)
+                // calculateGrandTotal();
             });
 
             // init
@@ -436,9 +460,21 @@
                 document.querySelectorAll('.po-line').forEach(row => {
                     let qty = parseFloat(row.querySelector('.qty')?.value) || 0;
                     let price = parseFloat(row.querySelector('.price')?.value) || 0;
-                    let disc = parseFloat(row.querySelector('.disc')?.value) || 0;
+                    let discValue = parseFloat(row.querySelector('.disc')?.value) || 0;
+                    let discType = row.querySelector('.disctype')?.value || 'amount'; // Ambil tipe diskon
 
-                    subtotal += (qty * price) - disc;
+                    let lineTotal = qty * price;
+                    let discCalculated = 0;
+
+                    if (discType === 'percent') {
+                        // Jika persen: (Qty * Harga) * (Nilai Persen / 100)
+                        discCalculated = lineTotal * (discValue / 100);
+                    } else {
+                        // Jika amount: Langsung kurangi nilai diskon
+                        discCalculated = discValue;
+                    }
+
+                    subtotal += (lineTotal - discCalculated);
                 });
 
                 // ==== GLOBAL DISCOUNT (AUTO) ====
