@@ -1805,9 +1805,14 @@
                     // Jika tabel ada di dalam modal, tambahkan: 
                     // dropdownParent: $el.parent() 
                 });
+                $el.on('select2:select', function(e) {
+                    updatePriceByUnit($el);
 
+
+                    // Pindah ke Qty di baris yang sama, Enter selanjutnya baru pindah baris
+                    $(this).closest('tr').find('input.qty').focus().select();
+                });
                 // Langsung update harga pertama kali load
-                updatePriceByUnit($el);
             }
 
             // 2. Fungsi Otomatis Update Harga saat Satuan Diganti
