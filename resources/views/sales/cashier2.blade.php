@@ -587,7 +587,8 @@
                                     <div class="card shadow-sm border-0">
                                         <div class="card-body p-0">
                                             <div class="table-responsive-sm">
-                                                <table class="table pos-table mb-0 responsive-cart-table">
+                                                <table class="table pos-table mb-0 responsive-cart-table"
+                                                    id="cartTable">
                                                     <thead>
                                                         <tr>
                                                             <th>Produk</th>
@@ -1147,6 +1148,7 @@
                 theme: "bootstrap-5",
                 minimumResultsForSearch: 0
             });
+
             $('#payment_type').select2({
                 placeholder: 'Tipe Pembayaran',
                 width: '100%',
@@ -1696,7 +1698,7 @@
                 // -----------------------------------------------------------------
                 const idUnik = item.prescode || item.id_unik; // Ambil dari data resume
                 tr.setAttribute('data-idunik', idUnik);
-                
+
                 tr.dataset.priceid = item.id || item.prescode;
                 tr.dataset.type = item.type;
 
@@ -1794,6 +1796,16 @@
                 });
                 $el.html(options);
 
+                $el.select2({
+                    placeholder: 'Cari Satuan',
+                    width: '100%',
+                    allowClear: true,
+                    theme: "bootstrap-5",
+                    minimumResultsForSearch: 0,
+                    // Jika tabel ada di dalam modal, tambahkan: 
+                    // dropdownParent: $el.parent() 
+                });
+
                 // Langsung update harga pertama kali load
                 updatePriceByUnit($el);
             }
@@ -1860,7 +1872,102 @@
                 window.currentGrandTotal = grand;
                 updateChange(grand);
             }
+
+            // Shortcut F1 untuk mulai input di baris pertama
+            $(document).on('keydown', function(e) {
+                if (e.key === 'F4') {
+                    e.preventDefault();
+                    let firstRow = $('#cartTable tbody tr:first');
+                    focusRow(firstRow);
+                }
+            });
+
+            function focusRow(row) {
+                if (row && row.length > 0) {
+                    // 1. Highlight visual
+                    $('#cartTable tbody tr').removeClass('table-primary'); // Pastikan ID tabel benar
+                    row.addClass('table-primary');
+
+                    // 2. Tembak input Qty
+                    // Gunakan setTimeout 50ms jika baris baru saja dibuat (render delay)
+                    setTimeout(() => {
+                        let qtyInput = row.find('input.qty');
+                        if (qtyInput.length > 0) {
+                            qtyInput.focus().select();
+                        }
+                    }, 50);
+
+                    // 3. Scroll ke pandangan user
+                    row[0].scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest'
+                    });
+                }
+            }
+
+            $(document).on('keydown', '#cartTable tbody tr input, #cartTable tbody tr select', function(e) {
+                // Deteksi Enter dan pastikan Select2 sedang tertutup
+                if (e.key === 'Enter' && !$('.select2-container--open').length) {
+                    e.preventDefault();
+
+                    let currentRow = $(this).closest('tr');
+                    let nextRow = currentRow.next('tr');
+
+                    if (nextRow.length > 0) {
+                        focusRow(nextRow);
+                    } else {
+                        // JIKA DI BARIS TERAKHIR: Tambah baris baru otomatis
+                        if (typeof addRow === "function") {
+                            addRow(); // Panggil fungsi tambah baris Anda
+                            // Fokuskan ke baris yang baru saja dibuat
+                            let newlyAddedRow = $('#cartTable tbody tr:last');
+                            focusRow(newlyAddedRow);
+                        }
+                    }
+                }
+            });
+            $(document).on('keydown', '#cartTable tbody tr input, #cartTable tbody tr select', function(e) {
+                // Jika menekan Enter (dan bukan di dalam dropdown yang sedang terbuka)
+                if (e.key === 'Enter' && !$('.select2-container--open').length) {
+                    e.preventDefault();
+
+                    let nextRow = $(this).closest('tr').next('tr');
+
+                    if (nextRow.length > 0) {
+                        focusRow(nextRow);
+                    } else {
+                        // Opsional: Jika di baris terakhir, otomatis tambah baris baru
+                        // addRow();
+                        focusRow($('#cartTable tbody tr:last'));
+                    }
+                }
+            });
+            $(document).on('keydown', function(e) {
+                // Cari baris yang sedang aktif (berdasarkan kursor)
+                let activeRow = $(document.activeElement).closest('tr');
+                if (activeRow.length === 0) return;
+
+                // Pastikan user TIDAK sedang mengetik di dalam input (agar huruf u/s tidak terketik)
+                let isTyping = $(document.activeElement).is('input[type="number"], input[type="text"]');
+
+                // Shortcut 'u' atau 's' untuk Satuan
+                if (!isTyping && (e.key.toLowerCase() === 'u' || e.key.toLowerCase() === 's')) {
+                    e.preventDefault();
+                    let selectUm = activeRow.find('.select-measurement');
+
+                    // Gunakan logika yang sudah work sebelumnya
+                    selectUm.val(null).trigger('change');
+                    selectUm.select2('open');
+                }
+            });
         </script>
+        <style>
+            #cartTable tbody tr.table-primary {
+                background-color: #e7f1ff !important;
+                border-left: 5px solid #0d6efd;
+                transition: all 0.2s;
+            }
+        </style>
         <script>
             cartBody.addEventListener('input', recalc);
 
@@ -2325,6 +2432,87 @@
 
             });
         </script>
+        <script>
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'F4') {
+                    // console.log('f4 cliked');
+                    e.preventDefault();
+                    let firstRow = $('#cartTable tbody tr:first');
+                    focusRow(firstRow);
+                }
+            });
+
+            function focusRow(row) {
+                if (row && row.length > 0) {
+                    // 1. Highlight visual
+                    $('#cartTable tbody tr').removeClass('table-primary'); // Pastikan ID tabel benar
+                    row.addClass('table-primary');
+
+                    // 2. Tembak input Qty
+                    // Gunakan setTimeout 50ms jika baris baru saja dibuat (render delay)
+                    setTimeout(() => {
+                        let qtyInput = row.find('input.qty');
+                        if (qtyInput.length > 0) {
+                            qtyInput.focus().select();
+                        }
+                    }, 50);
+
+                    // 3. Scroll ke pandangan user
+                    row[0].scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'nearest'
+                    });
+                }
+            }
+
+            $(document).on('keydown', '#cartTable tbody tr input, #cartTable tbody tr select', function(e) {
+                // Deteksi Enter dan pastikan Select2 sedang tertutup
+                if (e.key === 'Enter' && !$('.select2-container--open').length) {
+                    e.preventDefault();
+
+                    let currentRow = $(this).closest('tr');
+                    let nextRow = currentRow.next('tr');
+
+                    if (nextRow.length > 0) {
+                        focusRow(nextRow);
+                    } else {
+                        // JIKA DI BARIS TERAKHIR: Tambah baris baru otomatis
+                        if (typeof addRow === "function") {
+                            addRow(); // Panggil fungsi tambah baris Anda
+                            // Fokuskan ke baris yang baru saja dibuat
+                            let newlyAddedRow = $('#cartTable tbody tr:last');
+                            focusRow(newlyAddedRow);
+                        }
+                    }
+                }
+            });
+
+            $(document).on('keydown', function(e) {
+                // Cari baris yang sedang aktif (berdasarkan kursor)
+                let activeRow = $(document.activeElement).closest('tr');
+                if (activeRow.length === 0) return;
+
+                // Pastikan user TIDAK sedang mengetik di dalam input (agar huruf u/s tidak terketik)
+                let isTyping = $(document.activeElement).is('input[type="number"], input[type="text"]');
+
+                // Shortcut 'u' atau 's' untuk Satuan
+                if (!isTyping && (e.key.toLowerCase() === 'u' || e.key.toLowerCase() === 's')) {
+                    e.preventDefault();
+                    let selectUm = activeRow.find('.select-measurement');
+
+                    // Gunakan logika yang sudah work sebelumnya
+                    selectUm.val(null).trigger('change');
+                    selectUm.select2('open');
+                }
+            });
+        </script>
+        <style>
+            #cartTable tbody tr.table-primary {
+                background-color: #e7f1ff !important;
+                border-left: 5px solid #0d6efd;
+                transition: all 0.2s;
+            }
+        </style>
         <script>
             function submitSale(type, subtotal, disc_global, ppn, grandtotal, holdid) {
                 // 1. Validasi Cart (Menggunakan SweetAlert)

@@ -34,9 +34,19 @@ class BpbDet extends Model
         'bpb_det_expired',
     ];
 
+    public function master()
+    {
+        return $this->belongsTo(BpbMstr::class, 'bpb_det_mstrid', 'bpb_mstr_id');
+    }
+
     public function product()
     {
         return $this->belongsTo(Product::class, 'bpb_det_productid', 'id');
+    }
+
+    public function measurement()
+    {
+        return $this->belongsTo(Measurement::class, 'bpb_det_um', 'id');
     }
 
     public function batch()

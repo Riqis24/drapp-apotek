@@ -117,17 +117,6 @@
 
                     </div>
                 </div>
-                <div class="mt-3 text-end">
-                    <div class="mt-3">
-                        <button class="btn btn-success w-100 d-md-none">
-                            <i class="bi bi-save"></i> Simpan PO
-                        </button>
-                        <button class="btn btn-success d-none d-md-inline-block float-end">
-                            Simpan PO
-                        </button>
-                    </div>
-                </div>
-
                 <div class="row mt-4">
                     <div class="col-md-6"></div>
 
@@ -143,9 +132,6 @@
                                 <div class="d-flex justify-content-between align-items-center mb-2">
                                     <span class="text-muted">Diskon Global</span>
                                     <strong id="disc_global" class="fs-6">0</strong>
-                                    {{-- <input type="text" id="disc_global"
-                                        class="form-control form-control-sm text-end w-50 bg-light" value="0"
-                                        readonly> --}}
                                 </div>
 
                                 <div class="d-flex justify-content-between mb-2">
@@ -162,6 +148,16 @@
 
                             </div>
                         </div>
+                    </div>
+                </div>
+                <div class="mt-3 text-end">
+                    <div class="mt-3">
+                        <button class="btn btn-success w-100 d-md-none">
+                            <i class="bi bi-save"></i> Simpan PO
+                        </button>
+                        <button class="btn btn-lg btn-success d-none d-md-inline-block float-end">
+                            Simpan PO
+                        </button>
                     </div>
                 </div>
             </form>
@@ -183,6 +179,41 @@
                 {{-- <div class="modal-footer">
                     <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
                 </div> --}}
+            </div>
+        </div>
+    </div>
+
+    {{-- modal history harga --}}
+    <div class="modal fade" id="historyModal" tabindex="-1" aria-labelledby="historyModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title" id="historyModalLabel text-white">
+                        <i class="bi bi-clock-history"></i> History Pembelian
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered" id="tablePriceHistory">
+                            <thead>
+                                <tr>
+                                    <th>Tanggal</th>
+                                    <th>Supplier</th>
+                                    <th>Qty</th>
+                                    <th class="text-end">Harga</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyContent">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                </div>
             </div>
         </div>
     </div>
@@ -245,16 +276,22 @@
         <script>
             let rowIndex = 0;
 
-            function addRow() {
+            function addRow(item = {}) {
+                let pId = item.productid || item.po_det_productid || '';
                 let row = `
 <tr class="po-line">
     <td data-label="Produk">
-        <select name="items[${rowIndex}][productid]" class="form-control select2 item" required>
-            <option value="">-- produk --</option>
-            @foreach ($products as $p)
-                <option value="{{ $p->id }}">{{ $p->name }} - {{ numfmt($p->stocks->sum('quantity')) }}</option>
-            @endforeach
-        </select>
+        <select name="items[${rowIndex}][productid]" 
+                        class="form-control select2 product-select" 
+                        onchange="updateInlineHistory(this, ${rowIndex})" required>
+                    <option value="">-- pilih produk --</option>
+                    @foreach ($products as $p)
+                        <option value="{{ $p->id }}" ${pId == {{ $p->id }} ? 'selected' : ''}>
+                            {{ $p->name }}
+                        </option>
+                    @endforeach
+                </select>
+        <div id="history-inline-${rowIndex}" class="mt-1"></div>
         <small class="text-warning price-warning"></small>
     </td>
 
@@ -292,6 +329,12 @@
 </tr>
 `;
                 $('#poTable tbody').append(row);
+                if (pId) {
+                    // Beri jeda sebentar agar DOM selesai merender
+                    setTimeout(() => {
+                        updateInlineHistory($(`select[name="items[${rowIndex}][productid]"]`), rowIndex);
+                    }, 200);
+                }
 
                 // Inisialisasi Select2 dengan width 100% agar tidak berantakan di HP
                 $('.select2').select2({
@@ -338,6 +381,88 @@
 
             // init
             addRow();
+        </script>
+        <script>
+            function updateInlineHistory(element, rowIndex) {
+                const productId = $(element).val();
+                const container = $(`#history-inline-${rowIndex}`);
+                console.log(productId)
+                if (!productId) {
+                    container.html('');
+                    return;
+                }
+
+                container.html('<small class="text-muted"><i class="fa fa-spinner fa-spin"></i> Checking...</small>');
+
+                $.get(`/BpbMstr/getPriceHistory/${productId}`, function(res) {
+                    if (res && res.length > 0) {
+                        // Ambil data terbaru (index 0)
+                        const latest = res[0];
+                        const formattedPrice = new Intl.NumberFormat('id-ID').format(latest.price);
+
+                        container.html(`
+                <div class="d-flex justify-content-between align-items-center bg-light p-1 border-start border-info border-3" style="font-size: 0.75rem;">
+                    <div>
+                        <span class="text-muted">Last:</span> 
+                        <strong class="text-primary">Rp ${formattedPrice}</strong>
+                        <span class="text-muted d-block" style="font-size: 0.65rem;">${latest.bpb_date} - ${latest.supplier_name.substring(0, 15)}...</span>
+                    </div>
+                    <button type="button" class="btn btn-xs btn-outline-info p-0 px-1" 
+                            onclick="viewHistory(${productId})" title="Lihat semua history">
+                        <i class="bi bi-clock-history"></i>
+                    </button>
+                </div>
+            `);
+                    } else {
+                        container.html(
+                            '<small class="text-muted" style="font-size: 0.7rem;">Belum ada history</small>');
+                    }
+                });
+            }
+
+            function viewHistory(productId) {
+                // 1. Tampilkan modal
+                $('#historyModal').modal('show');
+
+                // 2. Hancurkan DataTable lama jika sudah ada
+                if ($.fn.DataTable.isDataTable('#tablePriceHistory')) {
+                    $('#tablePriceHistory').DataTable().destroy();
+                }
+
+                // 3. Set loading state
+                $('#historyContent').html('<tr><td colspan="4" class="text-center">Loading...</td></tr>');
+
+                $.get(`/BpbMstr/getPriceHistory/${productId}`, function(res) {
+                    let html = '';
+                    res.forEach(h => {
+                        html += `
+            <tr>
+                <td>${h.bpb_date}</td>
+                <td>${h.supplier_name}</td>
+                <td>${h.qty} ${h.um}</td>
+                <td class="text-end" data-order="${h.price}">
+                    ${new Intl.NumberFormat('id-ID').format(h.price)}
+                </td>
+            </tr>`;
+                    });
+
+                    $('#historyContent').html(html ||
+                        '<tr><td colspan="4" class="text-center">Belum ada history</td></tr>');
+
+                    // 4. Inisialisasi DataTables
+                    if (res.length > 0) {
+                        $('#tablePriceHistory').DataTable({
+                            searching: true,
+                            info: false,
+                            scrollY: "400px",
+                            scrollCollapse: true,
+                            order: [
+                                [0, 'desc']
+                            ]
+                        });
+                    }
+                });
+            }
         </script>
         <script>
             $(document).on('change', '.item', function() {

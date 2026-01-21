@@ -41,8 +41,8 @@
                                         <td>{{ $item->bpb_mstr_nbr }}</td>
                                         <td>{{ $item->bpb_mstr_nofaktur }}</td>
                                         <td>{{ $item->bpb_mstr_nosj }}</td>
-                                        <td>{{ $item->po->po_mstr_nbr }}</td>
-                                        <td>{{ $item->supplier->supp_mstr_name }}</td>
+                                        <td>{{ $item->po->po_mstr_nbr ?? '-' }}</td>
+                                        <td>{{ $item->supplier->supp_mstr_name ?? '-' }}</td>
                                         <td>{{ $item->bpb_mstr_note }}</td>
                                         <td>{{ $item->bpb_mstr_createdat }}</td>
                                         <td>
@@ -50,11 +50,14 @@
                                                 onclick="window.open('{{ route('BpbMstr.show', $item->bpb_mstr_id) }}')">
                                                 <i class="bi bi-folder"></i>
                                             </button>
-
                                             <a href="{{ route('PrMstr.create', $item->bpb_mstr_id) }}"
-                                                class="btn btn-sm btn-warning">
+                                                class="btn btn-sm btn-secondary">
                                                 <i class="bi bi-cart-dash"></i>
                                             </a>
+                                            <button class="btn btn-sm btn-warning" type="button"
+                                                onclick="window.open('{{ route('BpbMstr.edit', $item->bpb_mstr_id) }}')">
+                                                <i class="bi bi-pen"></i>
+                                            </button>
                                             <form action="{{ route('BpbMstr.destroy', $item->bpb_mstr_id) }}"
                                                 method="POST" id="form-delete-{{ $item->bpb_mstr_id }}"
                                                 class="d-inline">

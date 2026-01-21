@@ -115,6 +115,7 @@ Route::middleware('auth')->group(function () {
 
 
     Route::resource('BpbMstr', BpbMstrController::class);
+    Route::get('BpbMstr/{id}/edit', [BpbMstrController::class, 'edit'])->name('BpbMstr.edit');
     // Route::get('BpbMstr/create', [BpbMstrController::class, 'create'])->name('BpbMstr.create');
     // Route::post('BpbMstr', [BpbMstrController::class, 'store'])->name('BpbMstr.store');
     Route::get('BpbMstr/getPoItems/{poid}', [BpbMstrController::class, 'getPoItems'])->name('BpbMstr.getPoItems');
