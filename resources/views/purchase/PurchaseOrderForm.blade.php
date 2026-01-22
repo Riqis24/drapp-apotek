@@ -100,7 +100,7 @@
                             <thead class="table-light">
                                 <tr>
                                     <th width="35%">Produk</th>
-                                    <th width="10%">Um</th>
+                                    <th width="10%">Satuan</th>
                                     <th width="10%">Qty</th>
                                     <th width="15%">Harga</th>
                                     <th width="15%">Diskon</th>
@@ -297,7 +297,7 @@
 
     <td data-label="Satuan (UM)">
         <select name="items[${rowIndex}][umid]" class="form-control select2 um" required>
-            <option value="">-- um --</option>
+            <option value="">-- satuan --</option>
         </select>
     </td>
 
