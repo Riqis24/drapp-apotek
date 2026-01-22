@@ -465,7 +465,7 @@
             }
         </script>
         <script>
-            $(document).on('change', '.item', function() {
+            $(document).on('change', '.product-select', function() {
                 let row = $(this).closest('tr');
 
                 // hanya trigger jika yang berubah adalah product select

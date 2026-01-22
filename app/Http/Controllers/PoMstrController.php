@@ -51,6 +51,7 @@ class PoMstrController extends Controller
 
     public function getProductUms($productId)
     {
+        // dd($productId);
         $ums = ProductMeasurements::where('product_id', $productId)
             ->with('measurement')
             ->get()
