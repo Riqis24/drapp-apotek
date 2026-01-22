@@ -665,13 +665,13 @@
                     function() {
                         // Validasi max qty jika diperlukan
                         const $input = $(this);
-                        if ($input.hasClass('bpb-qty-input')) {
-                            const max = parseFloat($input.attr('max'));
-                            if ($input.val() > max) {
-                                alert('Qty tidak boleh melebihi sisa PO!');
-                                $input.val(max);
-                            }
-                        }
+                        // if ($input.hasClass('bpb-qty-input')) {
+                        //     const max = parseFloat($input.attr('max'));
+                        //     if ($input.val() > max) {
+                        //         alert('Qty tidak boleh melebihi sisa PO!');
+                        //         $input.val(max);
+                        //     }
+                        // }
                         calculateBpbSummary();
                     });
 

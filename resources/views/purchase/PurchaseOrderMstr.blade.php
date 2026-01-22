@@ -71,10 +71,10 @@
                                                     <i class="bi bi-trash"></i>
                                                 </button>
                                             </form>
-                                            <button type="button" class="btn btn-sm btn-warning rounded"
+                                            {{-- <button type="button" class="btn btn-sm btn-warning rounded"
                                                 onclick="window.location.href='{{ route('PrMstr.create', $item->po_mstr_id) }}'">
                                                 <i class="bi bi-cart-dash"></i>
-                                            </button>
+                                            </button> --}}
                                         </td>
                                     </tr>
                                 @endforeach

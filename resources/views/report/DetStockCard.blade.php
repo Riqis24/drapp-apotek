@@ -117,6 +117,7 @@
                                             class="text-primary fw-bold small text-uppercase">{{ $st->location->loc_mstr_name ?? '-' }}</span>
                                     </td>
                                     <td>
+                                    
                                         <div class="fw-bold text-dark mb-1">
                                             {{ str_replace('App\Models\\', '', $st->source_type) }}
                                             <a href="{{ route($route, $st->source_id) }}">({{ $referenceNbr }})</a>

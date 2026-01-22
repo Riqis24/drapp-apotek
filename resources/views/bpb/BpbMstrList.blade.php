@@ -46,24 +46,31 @@
                                         <td>{{ $item->bpb_mstr_note }}</td>
                                         <td>{{ $item->bpb_mstr_createdat }}</td>
                                         <td>
-                                            <button class="btn btn-sm btn-info" type="button"
+                                            <button class="btn btn-sm btn-info" type="button" data-bs-toggle="tooltip"
+                                                data-bs-placement="top" title="Lihat Detail BPB"
                                                 onclick="window.open('{{ route('BpbMstr.show', $item->bpb_mstr_id) }}')">
                                                 <i class="bi bi-folder"></i>
                                             </button>
+
                                             <a href="{{ route('PrMstr.create', $item->bpb_mstr_id) }}"
-                                                class="btn btn-sm btn-secondary">
+                                                class="btn btn-sm btn-secondary" data-bs-toggle="tooltip"
+                                                data-bs-placement="top" title="Buat Purchase Return">
                                                 <i class="bi bi-cart-dash"></i>
                                             </a>
+
                                             <button class="btn btn-sm btn-warning" type="button"
+                                                data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Data BPB"
                                                 onclick="window.open('{{ route('BpbMstr.edit', $item->bpb_mstr_id) }}')">
                                                 <i class="bi bi-pen"></i>
                                             </button>
+
                                             <form action="{{ route('BpbMstr.destroy', $item->bpb_mstr_id) }}"
                                                 method="POST" id="form-delete-{{ $item->bpb_mstr_id }}"
                                                 class="d-inline">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="button" class="btn btn-sm btn-danger"
+                                                    data-bs-toggle="tooltip" data-bs-placement="top" title="Hapus BPB"
                                                     onclick="confirmDelete('{{ $item->bpb_mstr_id }}')">
                                                     <i class="bi bi-trash"></i>
                                                 </button>
@@ -106,6 +113,13 @@
                     }
                 })
             }
+            $(document).ready(function() {
+                // Mengaktifkan semua tooltip di halaman
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+                var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl)
+                });
+            });
         </script>
         <script src="{{ 'assets/js/alert.js' }}"></script>
     @endpush
