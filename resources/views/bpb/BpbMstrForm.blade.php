@@ -713,12 +713,12 @@
             // Fungsi pembantu agar tidak duplikasi penulisan
             function calculateAllLogic() {
                 // Validasi Qty Max jika diinput manual
-                $('.bpb-qty-input').each(function() {
-                    let max = parseFloat($(this).attr('max'));
-                    if (parseFloat($(this).val()) > max) {
-                        $(this).val(max);
-                    }
-                });
+                // $('.bpb-qty-input').each(function() {
+                //     let max = parseFloat($(this).attr('max'));
+                //     if (parseFloat($(this).val()) > max) {
+                //         $(this).val(max);
+                //     }
+                // });
 
                 calculateBpbSummary(); // Panggil fungsi kalkulasi yang sudah dibuat sebelumnya
             }
