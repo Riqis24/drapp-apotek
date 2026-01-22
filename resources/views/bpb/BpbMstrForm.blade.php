@@ -20,7 +20,6 @@
                     {{-- <input type="text" name="nofaktur" value="{{ old('nofaktur', $bpb->bpb_mstr_nofaktur ?? '') }}"> --}}
 
                     <div class="row g-3 mb-3">
-
                         <div class="col-md-5">
                             <label>PO</label>
                             <select name="poId" class="form-control select2" id="poSelect"
@@ -172,7 +171,7 @@
                                 <thead class="table-light">
                                     <tr>
                                         <th>Produk</th>
-                                        <th style="width: 6%">UM</th>
+                                        <th style="width: 6%">Satuan</th>
                                         <th style="width: 8%">Qty</th>
                                         <th style="width: 12%">Harga</th>
                                         <th style="width: 16%">Disc</th>
