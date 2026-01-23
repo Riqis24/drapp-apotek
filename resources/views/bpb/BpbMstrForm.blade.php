@@ -22,15 +22,22 @@
                     <div class="row g-3 mb-3">
                         <div class="col-md-5">
                             <label>PO</label>
-                            <select name="poId" class="form-control select2" id="poSelect"
-                                {{ isset($bpb) ? 'disabled' : '' }}>
-                                @foreach ($pos as $po)
-                                    <option value="{{ $po->po_mstr_id }}"
-                                        {{ old('poId', $bpb->bpb_mstr_poid ?? '') == $po->po_mstr_id ? 'selected' : '' }}>
-                                        {{ $po->po_mstr_nbr . ' [' . $po->supplier->supp_mstr_name . ']' }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <div class="input-group">
+                                <select name="poId" class="form-control select2" id="poSelect"
+                                    {{ isset($bpb) ? 'disabled' : '' }}>
+                                    <option value="">-- Pilih PO --</option>
+                                    @foreach ($pos as $po)
+                                        <option value="{{ $po->po_mstr_id }}"
+                                            {{ old('poId', $bpb->bpb_mstr_poid ?? '') == $po->po_mstr_id ? 'selected' : '' }}>
+                                            {{ $po->po_mstr_nbr . ' [' . $po->supplier->supp_mstr_name . ']' }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="button" class="btn btn-outline-danger" id="btnResetPo" title="Ganti PO">
+                                    <i class="bi bi-arrow-counterclockwise"></i>
+                                </button>
+                            </div>
+
 
                             {{-- Jika mode edit, select di-disable, maka kita butuh input hidden agar poId tetap terkirim --}}
                             @if (isset($bpb))
@@ -41,7 +48,7 @@
                         {{-- Gudang: Default ID tertentu jika perlu --}}
                         <div class="col-md-4">
                             <label>Gudang</label>
-                            <select name="loc_id" class="form-control select2" required>
+                            <select name="loc_id" class="form-select select2" required>
                                 @foreach ($locs as $loc)
                                     <option value="{{ $loc->loc_mstr_id }}"
                                         {{ old('loc_id', $bpb->bpb_mstr_locid ?? '') == $loc->loc_mstr_id ? 'selected' : '' }}>
@@ -77,11 +84,24 @@
                         </div>
 
                         <div class="col-md-6">
-                            <label>Supplier</label>
-                            <input type="hidden" name="suppid" id="suppid" class="form-control" readonly
-                                value="{{ old('suppid', $bpb->bpb_mstr_suppid ?? '') }}">
-                            <input type="text" id="suppname" class="form-control" readonly
-                                value="{{ old('suppname', $bpb->supplier->supp_mstr_name ?? '') }}">
+                            <label class="form-label">Supplier</label>
+
+                            @if (isset($bpb))
+                                <input type="hidden" name="suppid" id="suppid"
+                                    value="{{ old('suppid', $bpb->bpb_mstr_suppid) }}">
+                                <input type="text" id="suppname" class="form-control bg-light" readonly
+                                    value="{{ old('suppname', $bpb->supplier->supp_mstr_name ?? '') }}">
+                            @else
+                                <select name="suppid" id="suppid" class="form-control select2" required>
+                                    <option value="">-- Pilih Supplier --</option>
+                                    @foreach ($suppliers as $s)
+                                        <option value="{{ $s->supp_mstr_id }}"
+                                            {{ old('suppid') == $s->supp_mstr_id ? 'selected' : '' }}>
+                                            {{ $s->supp_mstr_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            @endif
                         </div>
 
                         {{-- Jenis Pembayaran --}}
@@ -359,6 +379,9 @@
             $('#manualProductSelect').select2({
                 theme: "bootstrap-5"
             })
+            $('#suppid').select2({
+                theme: "bootstrap-5"
+            })
             $('#poSelect').select2({
                 theme: "bootstrap-5"
             }).on('change', function() {
@@ -463,108 +486,143 @@
             }
         </style>
         <script>
+            $('#btnResetPo').on('click', function() {
+                // 1. Aktifkan kembali dropdown PO
+                $('#poSelect').attr('readonly', false);
+                $('#poSelect').parent().find('.select2-selection').css("background-color", "");
+                $('#poSelect').parent().find('.select2-container').css("pointer-events", "");
+
+                // 2. Kosongkan tabel dan reset supplier
+                $('#poSelect').val(null).trigger('change');
+                $('#bpbTable tbody').empty();
+                $('#suppid').val(null).trigger('change');
+                $('#suppname').val('');
+
+                if ($('#suppid').is('select')) {
+                    $('#suppid').val(null).trigger('change');
+                    $('#suppid').parent().find('.select2-container').css("pointer-events", "");
+                    $('#suppid').parent().find('.select2-selection').css("background-color", "");
+                } else {
+                    $('#suppid').val('');
+                    $('#suppname').val('').removeClass('bg-light');
+                }
+            });
             let rowIndex = 0;
 
             $('#poSelect').on('change', function() {
                 let poId = $(this).val();
                 if (!poId) return;
 
+                // Kunci dropdown PO agar tidak bisa diganti (Mode Readonly)
+                $(this).attr('readonly', true);
+                $(this).parent().find('.select2-selection').css("background-color",
+                    "#e9ecef"); // Beri warna abu-abu khas readonly
+                $(this).parent().find('.select2-container').css("pointer-events", "none"); // Kunci klik
+
                 $('#bpbTable tbody').empty();
                 rowIndex = 0;
 
-                $.get(`/BpbMstr/getPoItems/${poId}`, function(items) {
+                $.get(`/BpbMstr/getPoItems/${poId}`, function(response) {
+                    // PERBAIKAN: Pastikan response berisi data supplier dan items
+                    // Asumsi: response = { supplier_id: 1, supplier_name: 'PT ABC', items: [...] }
+
+                    let supplierId = response.supplier_id;
+                    let supplierName = response.supplier_name;
+                    let items = response.items;
+
+                    // ISI DATA SUPPLIER
+                    if ($('#suppid').is('select')) {
+                        $('#suppid').val(supplierId).trigger('change').attr('readonly', true);
+                        $('#suppid').parent().find('.select2-selection').css("background-color", "#e9ecef");
+                        $('#suppid').parent().find('.select2-container').css("pointer-events", "none");
+                    } else {
+                        // Jika mode Edit atau Readonly Input
+                        $('#suppid').val(supplierId);
+                        $('#suppname').val(supplierName);
+                    }
+
+                    // LOOP RENDER ITEMS
                     items.forEach(item => {
-                        // 1. Logika Perbandingan Harga (Letakkan ini sebelum merender row)
                         const bpbPrice = parseFloat(item.po_det_price) || 0;
                         const lastBuyPrice = item.pm ? parseFloat(item.pm.last_buy_price) : 0;
-                        // console.log(lastBuyPrice);
-                        // Penanda jika harga baru lebih mahal dari HPP Average
                         const isPriceUp = (bpbPrice > lastBuyPrice && lastBuyPrice > 0);
 
-                        // Style untuk baris dan teks
-                        const rowClass = isPriceUp ? 'table-warning' :
-                            ''; // Memberi warna kuning pada baris
+                        const rowClass = isPriceUp ? 'table-warning' : '';
                         const textPriceStyle = isPriceUp ?
                             'style="color: #dc3545; font-weight: bold;"' : '';
 
-                        // 2. Render Row
                         let row = `
-    <tr class="bpb-line ${rowClass}">
-        <td data-label="Produk">
-            <input type="hidden" name="items[${rowIndex}][po_det_id]" value="${item.po_det_id}">
-            <input type="hidden" name="items[${rowIndex}][productid]" value="${item.po_det_productid}">
-            <span class="fw-bold text-primary">${item.product.name}</span>
-            <br>
-            <button type="button" class="btn btn-sm btn-link p-0 text-info" onclick="viewHistory(${item.po_det_productid})">
-                <i class="bi bi-clock-history"></i> History Harga
-            </button>
-            ${isPriceUp ? `<div class="text-xs text-danger mt-1"><i class="bi bi-exclamation-triangle-fill"></i> Harga naik dari Rp ${new Intl.NumberFormat('id-ID').format(lastBuyPrice)}</div>` : ''}
-        </td>
+                <tr class="bpb-line ${rowClass}">
+                    <td data-label="Produk">
+                        <input type="hidden" name="items[${rowIndex}][po_det_id]" value="${item.po_det_id}">
+                        <input type="hidden" name="items[${rowIndex}][productid]" value="${item.po_det_productid}">
+                        <span class="fw-bold text-primary">${item.product.name}</span>
+                        <br>
+                        <button type="button" class="btn btn-sm btn-link p-0 text-info" onclick="viewHistory(${item.po_det_productid})">
+                            <i class="bi bi-clock-history"></i> History
+                        </button>
+                        ${isPriceUp ? `<div class="text-xs text-danger mt-1"><i class="bi bi-exclamation-triangle-fill"></i> Harga naik dari Rp ${new Intl.NumberFormat('id-ID').format(lastBuyPrice)}</div>` : ''}
+                    </td>
 
-        <td data-label="Satuan (UM)">
-            <input type="hidden" name="items[${rowIndex}][umid]" value="${item.po_det_um}">
-            <input type="hidden" name="items[${rowIndex}][umconv]" value="${item.po_det_umconv}">
-            <span class="badge bg-light-secondary text-dark">${item.um.name}</span>
-        </td>
+                    <td data-label="Satuan (UM)">
+                        <input type="hidden" name="items[${rowIndex}][umid]" value="${item.po_det_um}">
+                        <input type="hidden" name="items[${rowIndex}][umconv]" value="${item.po_det_umconv}">
+                        <span class="badge bg-light-secondary text-dark">${item.um.name}</span>
+                    </td>
 
-        <td data-label="Qty Terima">
-            <input type="number" name="items[${rowIndex}][qty]" class="form-control bpb-qty-input" 
-                   value="${item.po_det_qtyremain}" max="${item.po_det_qtyremain}">
-            <small class="text-muted text-xs">Sisa PO: ${item.po_det_qtyremain}</small>
-        </td>
+                    <td data-label="Qty Terima">
+                        <input type="number" name="items[${rowIndex}][qty]" class="form-control bpb-qty-input qty" 
+                               value="${item.po_det_qtyremain}" max="${item.po_det_qtyremain}">
+                        <small class="text-muted text-xs">Sisa PO: ${item.po_det_qtyremain}</small>
+                    </td>
 
-        <td data-label="Harga Beli">
-            <div class="d-flex align-items-center">
-                <input type="number" name="items[${rowIndex}][price]" class="form-control bg-light bpb-price-input" 
-                       value="${item.po_det_price}" ${textPriceStyle}>
-                ${isPriceUp ? '<i class="fas fa-arrow-up text-danger ms-2" title="Harga naik!"></i>' : ''}
-            </div>
-        </td>
+                    <td data-label="Harga Beli">
+                        <input type="number" name="items[${rowIndex}][price]" class="form-control bg-light bpb-price-input" 
+                               value="${item.po_det_price}" ${textPriceStyle}>
+                    </td>
 
-        <td data-label="Diskon">
-            <div class="input-group">
-                <select name="items[${rowIndex}][disctype]" class="form-select bpb-disctype-input" style="width: 70px;">
-                        <option value="amount" ${item.po_det_disctype === 'amount' ? 'selected' : ''}>Rp</option>
-                        <option value="percent" ${item.po_det_disctype === 'percent' ? 'selected' : ''}>%</option>
-                    </select>
-                <input type="number" name="items[${rowIndex}][discvalue]" class="form-control bpb-discvalue-input" 
-                       value="${item.po_det_discvalue || 0}">
-            </div>
-        </td>
+                    <td data-label="Diskon">
+                        <div class="input-group">
+                            <select name="items[${rowIndex}][disctype]" class="form-select bpb-disctype-input" style="width: 70px;">
+                                <option value="amount" ${item.po_det_disctype === 'amount' ? 'selected' : ''}>Rp</option>
+                                <option value="percent" ${item.po_det_disctype === 'percent' ? 'selected' : ''}>%</option>
+                            </select>
+                            <input type="number" name="items[${rowIndex}][discvalue]" class="form-control bpb-discvalue-input" 
+                                   value="${item.po_det_discvalue || 0}">
+                        </div>
+                    </td>
 
-        <td data-label="Batch & Exp">
-            <input type="text" name="items[${rowIndex}][batch_no]" class="form-control mb-1" 
-                   placeholder="No. Batch" required>
-            <input type="date" name="items[${rowIndex}][expired_date]" class="form-control" required>
-        </td>
+                    <td data-label="Batch & Exp">
+                        <input type="text" name="items[${rowIndex}][batch_no]" class="form-control mb-1" placeholder="Batch" required>
+                        <input type="date" name="items[${rowIndex}][expired_date]" class="form-control" required>
+                    </td>
 
-        <td data-label="Subtotal">
-            <input type="text" class="form-control bg-light bpb-subtotal-display" readonly value="0">
-        </td>
+                    <td data-label="Subtotal">
+                        <input type="text" class="form-control bg-light bpb-subtotal-display" readonly value="0">
+                    </td>
 
-        <td data-label="Update Price" class="text-md-center">
-            <input type="hidden" name="items[${rowIndex}][margin]" value="${item.product.margin}">
-            <div class="form-check form-switch d-inline-block">
-                <input class="form-check-input chk-update-price" 
-                       type="checkbox" 
-                       name="items[${rowIndex}][updateprice]" 
-                       value="1"
-                       onclick="handleUpdatePriceCheckbox(this, '${item.po_det_productid}', '${item.po_det_um}')">
-                <label class="d-md-none">Update Harga Jual?</label>
-            </div>
-        </td>
-        
-        <td>
-            <button type="button" class="btn btn-danger btn-sm removeRow w-100">
-                <i class="bi bi-trash"></i> <span class="d-md-none">Hapus Barang</span>
-            </button>
-        </td>
-    </tr>`;
+                    <td data-label="Update" class="text-center">
+                        <input type="hidden" name="items[${rowIndex}][margin]" value="${item.product.margin}">
+                        <div class="form-check form-switch d-inline-block">
+                            <input class="form-check-input chk-update-price" type="checkbox" name="items[${rowIndex}][updateprice]" value="1">
+                        </div>
+                    </td>
+                    
+                    <td>
+                        <button type="button" class="btn btn-danger btn-sm removeRow">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>`;
 
                         $('#bpbTable tbody').append(row);
-                        calculateLineTotals();
                         rowIndex++;
                     });
+
+                    calculateLineTotals(); // Hitung ulang total setelah semua row masuk
+
+                    // Fokuskan ke Qty baris pertama agar user bisa langsung input
+                    focusRow($('#bpbTable tbody tr:first'));
                 });
             });
 
