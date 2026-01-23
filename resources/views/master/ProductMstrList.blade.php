@@ -54,32 +54,45 @@
                                         <td>{{ $product->type }}</td>
                                         <td style="text-align: center">
                                             <button type="button" class="btn btn-sm btn-info rounded"
+                                                data-bs-toggle="tooltip" data-bs-placement="top"
+                                                title="Kelola Satuan & Konversi"
                                                 onclick="window.location.href='{{ route('EditPrdMeasurement', $product->id) }}'">
                                                 <i class="bi bi-folder"></i>
                                             </button>
+
                                             @if ($product->type == 'single')
-                                                <button class="btn btn-warning btn-sm"
+                                                <button class="btn btn-warning btn-sm" data-bs-toggle="tooltip"
+                                                    data-bs-placement="top" title="Edit Cepat"
                                                     onclick="editProduct({
-                                                    id: {{ $product->id }},
-                                                    code: '{{ $product->code }}',
-                                                    name: '{{ $product->name }}',
-                                                    description: '{{ $product->description }}',
-                                                    satuan: '{{ $product->measurement_id }}',
-                                                    cat: '{{ $product->category }}',
-                                                    margin: {{ $product->margin }},
-                                                    type: '{{ $product->type }}',
-                                                    is_stockable: {{ $product->is_stockable }},
-                                                    is_visible: {{ $product->is_visible }}
-                                                })">
+                id: {{ $product->id }},
+                code: '{{ $product->code }}',
+                name: '{{ $product->name }}',
+                description: '{{ $product->description }}',
+                satuan: '{{ $product->measurement_id }}',
+                cat: '{{ $product->category }}',
+                margin: {{ $product->margin }},
+                type: '{{ $product->type }}',
+                is_stockable: {{ $product->is_stockable }},
+                is_visible: {{ $product->is_visible }}
+            })">
                                                     <i class="bi bi-pencil"></i>
                                                 </button>
+
+                                                <a href="{{ route('ProductMstr.edit', $product->id) }}"
+                                                    class="btn btn-secondary btn-sm" data-bs-toggle="tooltip"
+                                                    data-bs-placement="top" title="Lihat Detail Lengkap">
+                                                    <i class="bi bi-info-circle"></i>
+                                                </a>
                                             @else
                                                 <a href="{{ route('ProductBundle.edit', $product->id) }}"
-                                                    class="btn btn-warning btn-sm">
+                                                    class="btn btn-warning btn-sm" data-bs-toggle="tooltip"
+                                                    data-bs-placement="top" title="Edit Bundle Produk">
                                                     <i class="bi bi-pencil"></i>
                                                 </a>
                                             @endif
-                                            <button class="btn btn-danger btn-sm"
+
+                                            <button class="btn btn-danger btn-sm" data-bs-toggle="tooltip"
+                                                data-bs-placement="top" title="Hapus Produk"
                                                 onclick="deleteProduct({{ $product->id }}, '{{ $product->name }}')">
                                                 <i class="bi bi-trash"></i>
                                             </button>
@@ -181,6 +194,16 @@
     @push('scripts')
         <script src="{{ 'assets/js/ProductMstr/getData.js' }}"></script>
         <script src="{{ 'assets/js/alert.js' }}"></script>
+        <script>
+            $(document).ready(function() {
+                // Inisialisasi semua tooltip di halaman
+                var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+                var tooltipList = tooltipTriggerList.map(function(tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl)
+                });
+
+            });
+        </script>
         <script>
             const productModal = new bootstrap.Modal(document.getElementById('modalProduct'));
             const productForm = document.getElementById('productForm');

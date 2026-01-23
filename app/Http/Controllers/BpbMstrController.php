@@ -37,7 +37,9 @@ class BpbMstrController extends Controller
             ->get();
         $locs = LocMstr::all();
         $allProducts = ProductMeasurements::with(['product', 'measurement'])->get();
-        return view('bpb.BpbMstrForm', compact('pos', 'locs', 'allProducts'));
+        $suppliers = SuppMstr::all();
+
+        return view('bpb.BpbMstrForm', compact('pos', 'locs', 'allProducts', 'suppliers'));
     }
 
     public function edit($id)
@@ -67,8 +69,9 @@ class BpbMstrController extends Controller
     {
         $po = PoMstr::with([
             'details.product',
-            'details.product.measurements', // Ambil semua konversi milik produk
-            'details.um'
+            'details.product.ProductMeasurements', // Pastikan nama relasi sesuai di Model
+            'details.um',
+            'supplier'
         ])
             ->where('po_mstr_id', $poId)
             ->firstOrFail();
@@ -77,20 +80,26 @@ class BpbMstrController extends Controller
             ->where('po_det_qtyremain', '>', 0)
             ->values()
             ->map(function ($detail) {
-                // Cari satuan yang cocok dari koleksi measurements milik product
-                $matchedPm = $detail->product->ProductMeasurements
+                // Ambil relasi measurements dari produk
+                // Pastikan menggunakan nama relasi yang tepat (contoh: ProductMeasurements)
+                $measurements = $detail->product->ProductMeasurements ?? collect();
+
+                $matchedPm = $measurements
                     ->where('measurement_id', $detail->po_det_um)
                     ->first();
 
-                // Menggunakan setRelation agar Laravel menganggap ini sebagai relasi resmi
-                // dan otomatis menyertakannya saat response()->json()
+                // Pasang 'pm' sebagai relasi agar muncul di JSON
                 $detail->setRelation('pm', $matchedPm);
 
                 return $detail;
             });
 
-
-        return response()->json($items);
+        // MENGIRIM OBJEK LENGKAP
+        return response()->json([
+            'supplier_id'   => $po->po_mstr_suppid,
+            'supplier_name' => $po->supplier->supp_mstr_name ?? 'Unknown',
+            'items'         => $items
+        ]);
     }
 
     public function getPriceHistory($productId)

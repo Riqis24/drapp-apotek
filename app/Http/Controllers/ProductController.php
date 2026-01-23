@@ -9,6 +9,7 @@ use App\Models\Measurement;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\ProductMeasurements;
+use App\Models\ProductPlacement;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
@@ -111,9 +112,13 @@ class ProductController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit($id)
     {
-        //
+        $product = Product::with(['cat', 'ProductMeasurements.measurement', 'ProductMeasurements.placement'])->findOrFail($id);
+        $cats = ProductCat::all();
+        $ums = Measurement::all();
+        $placement = ProductPlacement::all();
+        return view('master.ProductMstrEdit', compact('product', 'cats', 'ums', 'placement'));
     }
 
     /**

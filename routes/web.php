@@ -66,7 +66,7 @@ Route::middleware('auth')->group(function () {
 
     Route::resource('RoleMstr', RoleController::class);
     Route::get('RoleMstr/{idRole}/assignRole', [RoleController::class, 'assignRole'])->name('RoleMstr.assignRole');
-    Route::put('RoleMstr/{idRole}/update', [RoleController::class, 'update'])->name('RoleMstr.update');
+    // Route::put('RoleMstr/{idRole}/update', [RoleController::class, 'update'])->name('RoleMstr.update');
 
     Route::resource('PermissionMstr', PermissionController::class);
 
@@ -92,6 +92,9 @@ Route::middleware('auth')->group(function () {
     Route::get('StockCard/{itemid}', [StockTransactionController::class, 'DetStockCard'])->name('StockTransaction.DetStockCard');
 
     Route::resource('ProductMeasurement', ProductMeasurementController::class);
+    Route::put('/ProductMeasurement/updateProduct/{id}', [ProductMeasurementController::class, 'updateProduct'])->name('ProductMeasurement.updateProduct');
+    Route::put('/ProductMeasurement/updateMeasurement/{id}', [ProductMeasurementController::class, 'updateMeasurement'])->name('ProductMeasurement.updateMeasurement');
+    Route::delete('/ProductMeasurement/delete/{id}', [ProductMeasurementController::class, 'destroy'])->name('ProductMeasurement.destroy');
 
     Route::resource('PriceMstr', PriceController::class);
     Route::get('/price/{id}', [PriceController::class, 'edit']);
