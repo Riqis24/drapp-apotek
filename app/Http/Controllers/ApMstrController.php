@@ -21,7 +21,7 @@ class ApMstrController extends Controller
     public function index()
     {
         $aps = ApMstr::with('supplier')->get();
-        return view('Ap.ApMstrList', compact('aps'));
+        return view('ap.ApMstrList', compact('aps'));
     }
 
     /**
