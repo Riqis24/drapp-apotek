@@ -21,7 +21,7 @@ class ApMstrController extends Controller
     public function index()
     {
         $aps = ApMstr::with('supplier')->get();
-        return view('ap.ApMstrList', compact('aps'));
+        return view('Ap.ApMstrList', compact('aps'));
     }
 
     /**
@@ -48,7 +48,7 @@ class ApMstrController extends Controller
         // dd('test');
         $aps = AppayDet::with(['master.supplier', 'ap'])->where('appay_det_apid', $id)->get();
         $transaction = ApMstr::findOrFail($id);
-        return view('ap.ApMstrPay', compact('aps', 'transaction'));
+        return view('Ap.ApMstrPay', compact('aps', 'transaction'));
     }
 
     public function suppstatement(Request $request)
